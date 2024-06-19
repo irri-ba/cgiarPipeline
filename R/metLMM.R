@@ -375,8 +375,8 @@ metLMM <- function(
                   genoMetaData <- list(withMarkandPheno=character(), withPhenoOnly=differ, withMarkOnly=onlyInA )
                 }else{
                   M <- Markers[commonBetweenMandP,]
-                  if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
-                    A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
+                  if(ncol(M) > nMarkersRRBLUP){ # we remove that many markers if a big snp chip
+                    A <- sommer::A.mat(M[,sample(1:ncol(M), nMarkersRRBLUP)])
                   }else{ A <- sommer::A.mat(M) };  M <- NULL
                   if(modelTypeTrait[iTrait] == "ssgblup"){ # only if ssgblup we merge
                     A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)

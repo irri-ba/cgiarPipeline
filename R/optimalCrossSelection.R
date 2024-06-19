@@ -31,7 +31,7 @@ ocs <- function(
   }
   
   if( phenoDTfile$status[phenoDTfile$status$analysisId == analysisId,"module"] == "indexD"){
-    otherTraits <- setdiff( unique(phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId, "trait"]), "inputObject")
+    otherTraits <- setdiff( unique(phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId, "trait"]), c("inputObject","general"))
     analysisIdOtherTraits <- phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId & phenoDTfile$modeling$trait == "inputObject", "value"]
   }else{
     otherTraits <- setdiff(unique(mydata$trait), trait)

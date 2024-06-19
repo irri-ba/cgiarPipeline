@@ -15,6 +15,7 @@ mtaLmmFlex <- function(
 ){
   ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING LMM SOLVER
   mtaAnalysisId <- as.numeric(Sys.time())
+  '%!in%' <- function(x,y)!('%in%'(x,y)) 
   if(is.null(phenoDTfile)){stop("Please provide the phenotype file", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the analysisId to be analyzed", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
@@ -52,7 +53,7 @@ mtaLmmFlex <- function(
   traitOrig <- trait
   
   conditionsModel <- unlist( lapply(inputFormulation, function(x){
-    if( (!is.null(x$left)) & (x$center == "|" | x$center == "||") & (x$right=="designation") ){
+    if( (!is.null(x$left)) & (x$center == "|" | x$center == "||") & ("designation" %in% x$right) ){
       return(TRUE)
     }else{return(FALSE)}
   }) )
@@ -65,7 +66,6 @@ mtaLmmFlex <- function(
   
   # add the other available columns to the dataset
   ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
-  form <<- as.formula( paste("predictedValue", "~", ff$form)  )
   mydata <<- ff$predictions
   
   # if the user provides two ids with same trait and environments kill the job
@@ -205,6 +205,7 @@ mtaLmmFlex <- function(
               }
               if(modelTypeTrait[iTrait] %in% c("gblup","ssgblup")){ # we need to calculate GRM
                 commonBetweenMandP <- intersect(rownames(Markers),designationFlevels)
+                withoutMarkers <- setdiff(designationFlevels, rownames(Markers))
                 if(length(commonBetweenMandP) < 2){ 
                   commonBetweenMandPInOriginal <- intersect(rownames(phenoDTfile$data$geno),designationFlevels)
                   if(length(commonBetweenMandPInOriginal) > 2){
@@ -221,11 +222,18 @@ mtaLmmFlex <- function(
                   A <- diag(length(toFixFailure)); colnames(A) <- rownames(A) <- toFixFailure
                 }else{
                   M <- Markers[commonBetweenMandP,]
-                  if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
-                    A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
+                  if(ncol(M) > nMarkersRRBLUP){ # we remove that many markers if a big snp chip
+                    A <- sommer::A.mat(M[,sample(1:ncol(M), nMarkersRRBLUP)])
                   }else{ A <- sommer::A.mat(M) };  M <- NULL
                   if(modelTypeTrait[iTrait] == "ssgblup"){ # only if ssgblup we merge
                     A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)
+                  }
+                  A <- A + diag(1e-4, ncol(A), ncol(A))
+                  if(length(withoutMarkers) > 0){
+                    newNames <- c(colnames(A), withoutMarkers)
+                    Ax <- diag(length(withoutMarkers))*mean(diag(A)); 
+                    A <- bdiag(A, Ax)
+                    colnames(A) <- rownames(A) <- newNames
                   }
                 }
                 
@@ -249,25 +257,47 @@ mtaLmmFlex <- function(
           }else{
             mydataSub$w  <- 1#/(mydataSub$stdError^2) # add weights column
           }
-          mydataSub <<-mydataSub
-          A <<- A
+          
           # save.image(file="strangeBug.RData")
+          relmat <- list(designation=A)
+          form <<- as.formula( paste("predictedValue", "~", ff$form[[iTrait]])  )
+          for(iVcov in 1:length(inputFormulation)){ # iVcov=1
+            if("designation" %in% inputFormulation[[iVcov]]$right){
+              toAdd <- setdiff(inputFormulation[[iVcov]]$right, "designation")
+              if(length(toAdd) > 0){
+                for(iTerm in toAdd){ # iTerm = toAdd[1]
+                  lvs <- unique(mydataSub[, iTerm])
+                  e <- which( inputFormulation[[iVcov]]$right == iTerm)
+                  d <- which( inputFormulation[[iVcov]]$right == "designation")
+                  E <- diag(length(lvs)); colnames(E) <- rownames(E) <- lvs
+                  if(e > d){
+                    A <- kronecker(A,E, make.dimnames = TRUE)
+                  }else{A <- kronecker(E,A, make.dimnames = TRUE)}
+                }
+              }
+              relmat <- list(A)
+              names(relmat) <- paste(inputFormulation[[iVcov]]$right, collapse = ":")
+            }
+          }
+          mydataSub <<-mydataSub
+          # A <<- A
+          relmat <<- relmat
           mix <- try(
             lmebreed(formula=form, 
-                                   family = NULL,  #REML = TRUE,
-                                   # addmat=list(),
-                                   start = NULL, verbose = TRUE,
-                                   weights = mydataSub$w,
-                                   # subset, na.action, offset,
-                                   contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
-                                   rotation=FALSE, coefOutRotation=8,
-                                   relmat=list(designation=A),
-                                   control = lmerControl(
-                                     check.nobs.vs.nlev = "ignore",
-                                     check.nobs.vs.rankZ = "ignore",
-                                     check.nobs.vs.nRE="ignore"
-                                   ),
-                                   data = mydataSub),
+                     family = NULL,  #REML = TRUE,
+                     # addmat=list(),
+                     start = NULL, verbose = TRUE,
+                     weights = mydataSub$w,
+                     # subset, na.action, offset,
+                     contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
+                     rotation=FALSE, coefOutRotation=8,
+                     relmat=relmat,#list(designation=A),
+                     control = lmerControl(
+                       check.nobs.vs.nlev = "ignore",
+                       check.nobs.vs.rankZ = "ignore",
+                       check.nobs.vs.nRE="ignore"
+                     ),
+                     data = mydataSub),
             silent = TRUE
           )
           # print(mix)
@@ -275,12 +305,12 @@ mtaLmmFlex <- function(
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             
             ## save the model formula used
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+            currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
                                           parameter=c("formula","family","designationEffectType"), 
                                           value=c(as.character(form)[3],traitFamily[iTrait], toupper(modelTypeTrait[iTrait]) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
             ## save the environments used goodFields
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
+            currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
                                           parameter="includedInMta", 
                                           value=ifelse(allEnvironments%in%goodFields, TRUE, FALSE))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
@@ -288,10 +318,11 @@ mtaLmmFlex <- function(
             blues <- as.data.frame(summary(mix)$coefficients)
             blues$Estimate <- lme4breeding::adjBeta(blues$Estimate)
             colnames(blues) <- c("predictedValue","stdError","tValue")
-            blues$designation <- rownames(blues); blues$environment <- "across"
+            blues$designation <- rownames(blues); blues$environment <- "(Intercept)"
             blues$reliability <- NA
+            blues$entryType <- ""
             
-            effs <- lme4breeding::ranef(mix, condVar=TRUE)
+            effs <- lme4breeding::ranef(object=mix, condVar=TRUE)
             intercept <- lme4::fixef(mix)[1]
             ## get variance components and fix names
             vc <- lme4::VarCorr(mix); #print(vc,comp=c("Variance"))
@@ -309,9 +340,9 @@ mtaLmmFlex <- function(
               Vg <- vars[which((vars$grp == iEffect) & (is.na(vars$var2) )), "vcov"]
               provEffects <- as.data.frame(effs[[iEffect]]); 
               
-              means[[iEffect]] <- apply(provEffects,2,function(x){mean(x,na.rm=TRUE)})
+              means[[iEffect]] <- apply(provEffects+intercept,2,function(x){mean(x,na.rm=TRUE)})
               sds[[iEffect]] <- apply(provEffects,2,function(x){sd(x,na.rm=TRUE)})
-              cvs[[iEffect]] <- sds[[iEffect]] / means[[iEffect]]
+              cvs[[iEffect]] <- (sds[[iEffect]] / means[[iEffect]]) * 100
               
               provEffects$designation <- rownames(provEffects)
               provEffectsLong <- reshape(provEffects, idvar = "designation", varying = list(1:(ncol(provEffects)-1)),
@@ -319,7 +350,17 @@ mtaLmmFlex <- function(
               provEffectsLong$predictedValue <- provEffectsLong$predictedValue + intercept
               SEs <- attr(effs[[iEffect]], which="postVar")
               if(is.list(SEs)){
-                provSe <- do.call(cbind, lapply(SEs,function(x){x[,,]}))
+                
+                provSe <- do.call(cbind,
+                                  lapply(SEs, function(x){
+                                    se <- list()
+                                    for(k in 1:dim(x)[1]){
+                                      se[[k]] <- x[k,k,] # get the diagonal value of each column #apply(x[,,],3,function(y){y[k,k]})
+                                    }
+                                    return( do.call(cbind, se) )
+                                  })
+                )
+                # provSe <- do.call(cbind, lapply(SEs,function(x){x[,,]}))
                 r2 <- provSe
                 for(iCol in 1:ncol(provSe)){r2[,iCol] <- (Vg[iCol] - provSe[,iCol])/Vg[iCol]}
                 provEffectsLong$stdError <- sqrt( as.vector((provSe)) )
@@ -332,8 +373,17 @@ mtaLmmFlex <- function(
                 provEffectsLong$stdError <- sqrt( as.vector((provSe)) )
                 # provEffectsLong$stdError <- as.vector(t(apply(SEs,3,function(x){diag(x)})))
               }
+              r2[which(r2 < 0, arr.ind = TRUE)]=0
               r2s[[iEffect]] <- apply(r2,2,function(x){mean(x, na.rm=TRUE)})
               provEffectsLong$reliability <- as.vector((r2))
+              # check if there is an across estimate, otherwise create it
+              if("(Intercept)" %!in% unique(provEffectsLong$environment) ){
+                ppa <- aggregate(cbind(predictedValue,stdError,reliability) ~ designation, FUN=mean, data=provEffectsLong)
+                ppa$environment <- "(Intercept)"
+                provEffectsLong <- rbind(provEffectsLong,ppa[,colnames(provEffectsLong)])
+              }
+              provEffectsLong$entryType <- iEffect
+              # print(head(provEffectsLong))
               pp[[iEffect]] <- provEffectsLong
             }
             pp <- do.call(rbind,pp)
@@ -341,25 +391,28 @@ mtaLmmFlex <- function(
             pp$trait <- iTrait # add trait
             
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("V.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("REML"),
                                                     value=vars[which( (is.na(vars$var2) )), "vcov"] ,
                                                     stdError=0
                                          ),
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("mean.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(means),NA ),
                                                     stdError=0
                                          ),
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("CV.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(cvs),NA ),
                                                     stdError=0
                                          ),
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("r2.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(r2s),NA ),
                                                     stdError=0
+                                         ),
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= "general",
+                                                    parameter="nEnv", method=c("n"), value= length(goodFields),stdError=0
                                          )
             )
             
@@ -370,17 +423,18 @@ mtaLmmFlex <- function(
             # pp$status <- "Aggregated"
             pp$reliability <- 1e-6
             pp$trait <- iTrait
+            pp$entryType <- ""
             cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
             ## save metrics
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
-                                                    environment="across",
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait,
+                                                    environment="(Intercept)",
                                                     parameter=c("mean","CV", "r2","Vg","Vr","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML","n"),
                                                     value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, Ve, length(goodFields) ),
                                                     stdError=c(0,0,0,0, 0,0 )
                                          )
             )
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+            currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
                                           parameter=c("formula","family","designationEffectType"), 
                                           value=c( "None","None","mean" ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
@@ -389,30 +443,35 @@ mtaLmmFlex <- function(
           #######################################
           #######################################
           #######################################
-          # Trait run is finished. If model worked well add entryType
-          if(!inherits(mix,"try-error") ){ 
-            pp$environment <- "across"
-            mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
-            pp$entryType <- apply(data.frame(pp$designation),1,function(x){
-              found <- which(mydataForEntryType$designation %in% x)
-              if(length(found) > 0){
-                x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-              }else{x2 <- "unknown"}
-              return(x2)
-            })
-            mydataForEntryType <- NULL
-            if(modelTypeTrait[iTrait] == "rrblup"){
-              pp$entryType <- ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"GEBV_tested", "GEBV_predicted")
-            }else{
-              pp$entryType <- paste(ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
-                                    pp$entryType,
+          # Trait run is finished, add entryType
+          mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
+          pp$entryType <- paste( pp$entryType,
+                                 apply(data.frame(pp$designation),1,function(x){
+                                   found <- which(mydataForEntryType$designation %in% x)
+                                   if(length(found) > 0){
+                                     x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
+                                   }else{x2 <- "unknown"}
+                                   return(x2)
+                                 }), sep = "_")
+          mydataForEntryType <- NULL
+          if(!inherits(mix,"try-error") ){  # if model run OK
+            if(modelTypeTrait[iTrait] == "rrblup"){ # rrblup model
+              pp$entryType <- paste( pp$entryType,
+                                     "GEBV",
+                                     ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"tested", "predicted"),
+                                     sep="_")
+            }else{ # other model
+              pp$entryType <- paste(pp$entryType,
+                                    ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
                                     ifelse(as.character(pp$designation) %in% setdiff(colnames(A), unique(mydataSub$designation) ), "predicted", "tested"), # 
                                     sep="_")
             }
-            ###
-            predictionsList[[counter2]] <- pp;
-            counter=counter+1
+          }else{ # if we just averaged
+            pp$entryType <- paste(pp$entryType,"average","tested", sep="_")
           }
+          ### save predictions
+          predictionsList[[counter2]] <- pp;
+          counter=counter+1
           failedMarkerModel=FALSE # reset if the trait model failed and was set to TRUE
         }
       }
@@ -438,15 +497,17 @@ mtaLmmFlex <- function(
     return(y)
   }))
   predictionsBind <- merge(predictionsBind,baseOrigin, by="designation", all.x=TRUE)
-  predictionsBind$module <- "mta"
+  predictionsBind$module <- "mtaFlex"
   #########################################
   ## update databases
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
+  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mtaFlex", analysisId=mtaAnalysisId))
   ## add which data was used as input
-  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
+  modeling <- data.frame(module="mtaFlex",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
+  rownames(phenoDTfile$metrics) <- NULL
+  rownames(phenoDTfile$modeling) <- NULL
   return(phenoDTfile)
 }

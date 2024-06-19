@@ -11,6 +11,8 @@ Calculates the desire selection index given a table of traits and desire changes
 indexDesire(
     phenoDTfile= NULL,
     analysisId=NULL, 
+    environmentToUse=NULL,
+    entryTypeToUse=NULL,
     trait= NULL,
     desirev = NULL, 
     scaled=TRUE, 
@@ -24,6 +26,12 @@ The data object structure produced from bioflow which contains data, metadata, m
 }
 \item{analysisId}{
 A numeric id to link to the predictions to be used for the selection index.
+}
+\item{environmentToUse}{
+A character vector specifying the levels of environments to use in the index.
+}
+\item{entryTypeToUse}{
+A character vector specifying the levels of entry types to use in the index.
 }
 \item{trait}{
 A character vector with the traits that should be included in the selection index. Once the predictions are subset to the requested analysisId an additional subset for the traits of interest is performed.  

@@ -1,6 +1,8 @@
 indexDesire <- function(
     phenoDTfile= NULL, # input data structure
     analysisId=NULL, # analysis to be picked from predictions database
+    environmentToUse=NULL,
+    entryTypeToUse=NULL,
     trait= NULL, # traits to include in the index
     desirev = NULL, # vector of desired values
     scaled=TRUE, # whether predicted values should be scaled or not
@@ -13,17 +15,28 @@ indexDesire <- function(
   moduleInput <- phenoDTfile$status[which(phenoDTfile$status$analysisId %in% analysisId),"module"]
   if(length(moduleInput)==0){stop("The file provided doesn't have the analysisId required.",call. = FALSE)}
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("mta"  %!in% moduleInput){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
+  if(moduleInput  %!in% c("mta","mtaFlex") ){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) != length(desirev)){stop("The number of traits and desirev values needs to be equal",call. = FALSE)}
+  names(desirev) <- trait
   ############################
   # loading the dataset
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]
+
+  if(is.null(environmentToUse)){ environmentToUse <- names(sort(table(mydata$environment)))}
+  mydata <- mydata[which(mydata$environment %in% environmentToUse),]
+  if(!is.null(entryTypeToUse)){
+    if(length(setdiff(entryTypeToUse,"")) > 0){
+      mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+    }
+  }
+  trait <- intersect(trait, unique(mydata$trait))
+  desirev <- desirev[trait]
   ############################
   # if the user provides two ids with same traits kill the job
   traitByIdCheck <- with(mydata, table(trait, analysisId))
-  traitByIdCheck <- traitByIdCheck/traitByIdCheck; 
+  traitByIdCheck <- traitByIdCheck/traitByIdCheck;
   checkOnPreds <- apply(traitByIdCheck,1,sum, na.rm=TRUE)
   badIdSelection <- which( checkOnPreds > 1)
   if(length(badIdSelection) > 0){
@@ -48,7 +61,8 @@ indexDesire <- function(
   b <- MASS::ginv(G)%*%desirev # desired weights Ginv*d, equivalent to knowing w (economic weights)
   merit <- wide %*% b
   newped <- data.frame(analysisId=idxAnalysisId,trait="desireIndex",
-                       designation=wide0[,1], predictedValue=merit,stdError=1e-6,reliability=1e-6, environment="across")
+                       designation=wide0[,1], predictedValue=merit,stdError=1e-6,reliability=1e-6,
+                       environment=paste(environmentToUse, collapse="_") )
   ##########################################
   ## add timePoint of origin, stage and designation code
   entries <- unique(mydata[,"designation"])
@@ -67,13 +81,13 @@ indexDesire <- function(
   ## update databases
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)])
   modeling <- data.frame(module="indexD",analysisId=idxAnalysisId, trait=if(scaled){paste0(rep(trait,2),"_scaled")}else{rep(trait,2)},
-                         environment="across",parameter=c(rep("desire",length(trait)),rep("weight",length(trait))),value=c(desirev, b ))
+                         environment=environmentToUse,parameter=c(rep("desire",length(trait)),rep("weight",length(trait))),value=c(desirev, b ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])
   phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="indexD", analysisId=idxAnalysisId))
   modeling1 <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId))
   modeling2 <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("general"), environment="general",
-                         parameter= c("scaled"), value= c(scaled))
+                         parameter= c("scaled", rep("entryTypeToUse",length(entryTypeToUse)) ), value= c(scaled, entryTypeToUse))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling1[, colnames(phenoDTfile$modeling)],modeling2[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }

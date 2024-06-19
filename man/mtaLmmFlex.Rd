@@ -98,10 +98,30 @@ Odegard, J., Indahl, U., Stranden, I., & Meuwissen, T. H. (2018). Large-scale ge
 
 \examples{
 ####=========================================####
+
 data(DT_example)
+data(inputFormulation)
 
 result$status
 result$metadata$pheno
+
+res <- mtaLmmFlex(
+    phenoDTfile= result, # analysis to be picked from predictions database
+    analysisId=result$status$analysisId[2],
+    analysisIdForGenoModifications=NULL,
+    inputFormulation=inputFormulation, 
+    envsToInclude=NULL,
+    trait= c("Yield_Mg_ha","Plant_Height_cm"), traitFamily=NULL, useWeights=FALSE,
+    heritLB= 0,  heritUB= 0.95,
+    meanLB=0, meanUB=Inf,
+    modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
+    nMarkersRRBLUP=1000,
+    deregress=FALSE,  
+    maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
+    verbose=TRUE
+)
+tail(res$predictions)
+
 
 
 }
