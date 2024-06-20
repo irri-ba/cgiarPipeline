@@ -320,7 +320,7 @@ mtaLmmFlex <- function(
             colnames(blues) <- c("predictedValue","stdError","tValue")
             blues$designation <- rownames(blues); blues$environment <- "(Intercept)"
             blues$reliability <- NA
-            blues$entryType <- ""
+            blues$entryType <- "fixedEffect"
             
             effs <- lme4breeding::ranef(object=mix, condVar=TRUE)
             intercept <- lme4::fixef(mix)[1]
@@ -378,7 +378,7 @@ mtaLmmFlex <- function(
               provEffectsLong$reliability <- as.vector((r2))
               # check if there is an across estimate, otherwise create it
               if("(Intercept)" %!in% unique(provEffectsLong$environment) ){
-                ppa <- aggregate(cbind(predictedValue,stdError,reliability) ~ designation, FUN=mean, data=provEffectsLong)
+                ppa <- aggregate(cbind(predictedValue,stdError,reliability) ~ designation, FUN=mean, data=provEffectsLong[which(provEffectsLong$predictedValue != 0),])
                 ppa$environment <- "(Intercept)"
                 provEffectsLong <- rbind(provEffectsLong,ppa[,colnames(provEffectsLong)])
               }
@@ -450,20 +450,22 @@ mtaLmmFlex <- function(
                                    found <- which(mydataForEntryType$designation %in% x)
                                    if(length(found) > 0){
                                      x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-                                   }else{x2 <- "unknown"}
+                                   }else{x2 <- "unknownType"}
                                    return(x2)
                                  }), sep = "_")
           mydataForEntryType <- NULL
           if(!inherits(mix,"try-error") ){  # if model run OK
             if(modelTypeTrait[iTrait] == "rrblup"){ # rrblup model
-              pp$entryType <- paste( pp$entryType,
+              toUseE <- grep("designation",pp$entryType)
+              pp$entryType[toUseE] <- paste( pp$entryType[toUseE],
                                      "GEBV",
-                                     ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"tested", "predicted"),
+                                     ifelse(as.character(pp$designation[toUseE]) %in% rownames(Mtrait) ,"tested", "predicted"),
                                      sep="_")
             }else{ # other model
-              pp$entryType <- paste(pp$entryType,
-                                    ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
-                                    ifelse(as.character(pp$designation) %in% setdiff(colnames(A), unique(mydataSub$designation) ), "predicted", "tested"), # 
+              toUseE <- grep("designation",pp$entryType)
+              pp$entryType[toUseE] <- paste(pp$entryType[toUseE],
+                                    ifelse(as.character(pp$designation[toUseE]) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
+                                    ifelse(as.character(pp$designation[toUseE]) %in% setdiff(colnames(A), unique(mydataSub$designation) ), "predicted", "tested"), # 
                                     sep="_")
             }
           }else{ # if we just averaged
