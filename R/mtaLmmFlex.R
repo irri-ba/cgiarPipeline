@@ -19,7 +19,7 @@ mtaLmmFlex <- function(
   if(is.null(phenoDTfile)){stop("Please provide the phenotype file", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the analysisId to be analyzed", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
-  if(is.null(traitFamily)){traitFamily <- rep("quasi(link = 'identity', variance = 'constant')", length(trait))}
+  if(is.null(traitFamily)){traitFamily <- rep("gaussian(link = 'identity')", length(trait))}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
   if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){
     stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)
@@ -154,6 +154,7 @@ mtaLmmFlex <- function(
       mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
     }
     if(verbose){print(paste("Fields included:",paste(goodFields,collapse = ",")))}
+    mydataSub <- droplevels(mydataSub)
     ## remove records without marker data if marker effects
     if(modelTypeTrait[iTrait] == "rrblup"){ # if rrBLUP model we remove records without markers
       mydataSub <- mydataSub[which(mydataSub$designation %in% rownames(Markers)),]
@@ -282,9 +283,26 @@ mtaLmmFlex <- function(
           mydataSub <<-mydataSub
           # A <<- A
           relmat <<- relmat
+          # print(traitFamily)
+          if( traitFamily[iTrait] == "gaussian(link = 'identity')"){
+            controlTrait <- lmerControl(
+              check.nobs.vs.nlev = "ignore",
+              check.nobs.vs.rankZ = "ignore",
+              check.nobs.vs.nRE="ignore"
+            )
+          }else{
+            controlTrait <- glmerControl(
+              check.nobs.vs.nlev = "ignore",
+              check.nobs.vs.rankZ = "ignore",
+              check.nobs.vs.nRE="ignore"#,
+              # tolPwrss=1e-3
+              # optCtrl=list(maxfun=1000, maxit=1000)
+            )
+            controlTrait$optimizer <- controlTrait$optimizer[1]
+          }
           mix <- try(
             lmebreed(formula=form, 
-                     family = NULL,  #REML = TRUE,
+                     family = eval(parse(text = traitFamily[iTrait])),  #REML = TRUE,
                      # addmat=list(),
                      start = NULL, verbose = TRUE,
                      weights = mydataSub$w,
@@ -292,11 +310,7 @@ mtaLmmFlex <- function(
                      contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
                      rotation=FALSE, coefOutRotation=8,
                      relmat=relmat,#list(designation=A),
-                     control = lmerControl(
-                       check.nobs.vs.nlev = "ignore",
-                       check.nobs.vs.rankZ = "ignore",
-                       check.nobs.vs.nRE="ignore"
-                     ),
+                     control = controlTrait,
                      data = mydataSub),
             silent = TRUE
           )
@@ -336,10 +350,38 @@ mtaLmmFlex <- function(
             ## get predictions and metrics
             pp <- means <- sds <- cvs <- r2s <- list()
             
+            intercepts0 <- list()
+            for(iEffect in names(effs)){ 
+              provInter <- aggregate(as.formula( paste("predictedValue", "~", iEffect) ), data=mydataSub, FUN=mean, na.rm=TRUE)
+              provInter[,paste0(iEffect,"2")] <- paste0("L.",provInter[,iEffect]) 
+              intercepts0[[iEffect]] <- provInter
+            }; intercepts0[["inter"]] <- data.frame(id="(Intercept)",predictedValue=intercept,id2="L.(Intercept)")
+            
             for(iEffect in names(effs)){ # iEffect = names(effs)[1]
               Vg <- vars[which((vars$grp == iEffect) & (is.na(vars$var2) )), "vcov"]
               provEffects <- as.data.frame(effs[[iEffect]]); 
-              
+              ## add the proper intercept to the estimate
+              if( traitFamily[iTrait] == "gaussian(link = 'identity')"){
+                for(iInter in 1:length(intercepts0)){ # iInter=3
+                  v1 <- which(colnames(provEffects) %in% intercepts0[[iInter]][,1])
+                  if(length(v1) > 0){
+                    rownames(intercepts0[[iInter]]) <- intercepts0[[iInter]][,1]
+                    vals <- intercepts0[[iInter]][colnames(provEffects)[v1] , "predictedValue"]
+                    mvals <- Matrix::Matrix(1, nrow = nrow(provEffects), ncol=1)
+                    mvals2 <- mvals %*% vals
+                    provEffects[,v1] <- provEffects[,v1, drop=FALSE] + as.data.frame(as.matrix(mvals2))
+                  }
+                  v3 <- which(colnames(provEffects) %in% intercepts0[[iInter]][,3])
+                  if(length(v3) > 0){
+                    rownames(intercepts0[[iInter]]) <- intercepts0[[iInter]][,3]
+                    vals <- intercepts0[[iInter]][colnames(provEffects)[v3] , "predictedValue"]
+                    mvals <- Matrix::Matrix(1, nrow = nrow(provEffects), ncol=1)
+                    mvals2 <- mvals %*% vals
+                    provEffects[,v3] <- provEffects[,v3, drop=FALSE] + as.data.frame(as.matrix(mvals2))
+                  }
+                }
+              }
+              ##
               means[[iEffect]] <- apply(provEffects+intercept,2,function(x){mean(x,na.rm=TRUE)})
               sds[[iEffect]] <- apply(provEffects,2,function(x){sd(x,na.rm=TRUE)})
               cvs[[iEffect]] <- (sds[[iEffect]] / means[[iEffect]]) * 100
@@ -347,7 +389,7 @@ mtaLmmFlex <- function(
               provEffects$designation <- rownames(provEffects)
               provEffectsLong <- reshape(provEffects, idvar = "designation", varying = list(1:(ncol(provEffects)-1)),
                                          v.names = "predictedValue", times=colnames(effs[[iEffect]]), timevar = "environment", direction = "long")
-              provEffectsLong$predictedValue <- provEffectsLong$predictedValue + intercept
+              # provEffectsLong$predictedValue <- provEffectsLong$predictedValue + intercept
               SEs <- attr(effs[[iEffect]], which="postVar")
               if(is.list(SEs)){
                 
@@ -390,6 +432,8 @@ mtaLmmFlex <- function(
             pp <- rbind(pp, blues[,colnames(pp)])
             pp$trait <- iTrait # add trait
             
+           
+            
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                          data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("V.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("REML"),
@@ -398,17 +442,17 @@ mtaLmmFlex <- function(
                                          ),
                                          data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("mean.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
-                                                    value=c(unlist(means),NA ),
+                                                    value=  if( traitFamily[iTrait] == "gaussian(link = 'identity')"){c(unlist(means),NA )}else{unlist(means)},
                                                     stdError=0
                                          ),
                                          data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("CV.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
-                                                    value=c(unlist(cvs),NA ),
+                                                    value= if( traitFamily[iTrait] == "gaussian(link = 'identity')"){c(unlist(cvs),NA )}else{unlist(cvs)},
                                                     stdError=0
                                          ),
                                          data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("r2.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
-                                                    value=c(unlist(r2s),NA ),
+                                                    value= if( traitFamily[iTrait] == "gaussian(link = 'identity')"){c(unlist(r2s),NA )}else{unlist(r2s)},
                                                     stdError=0
                                          ),
                                          data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= "general",
