@@ -285,13 +285,13 @@ mtaLmmFlex <- function(
           relmat <<- relmat
           # print(traitFamily)
           if( traitFamily[iTrait] == "gaussian(link = 'identity')"){
-            controlTrait <- lmerControl(
+            controlTrait <<- lmerControl(
               check.nobs.vs.nlev = "ignore",
               check.nobs.vs.rankZ = "ignore",
               check.nobs.vs.nRE="ignore"
             )
           }else{
-            controlTrait <- glmerControl(
+            controlTrait <<- glmerControl(
               check.nobs.vs.nlev = "ignore",
               check.nobs.vs.rankZ = "ignore",
               check.nobs.vs.nRE="ignore"#,
