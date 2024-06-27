@@ -62,16 +62,23 @@ staLMM <- function(
     if(paramsPed$value[motherColumn] == ""){
       myped$mother <- NA; paramsPed$value[motherColumn] <- "mother"
     }
+  }else{
+    myped$mother <- NA; paramsPed$value[motherColumn] <- "mother"
+    paramsPed <- rbind(paramsPed, data.frame(parameter="mother",value="mother"))
   }
   fatherColumn <- which(paramsPed$parameter == "father")
   if(length(fatherColumn) > 0){ 
     if(paramsPed$value[fatherColumn] == ""){
       myped$father <- NA; paramsPed$value[fatherColumn] <- "father"
     }
+  }else{
+    myped$father <- NA; paramsPed$value[fatherColumn] <- "father"
+    paramsPed <- rbind(paramsPed, data.frame(parameter="father",value="father"))
   }
-  if(length(intersect(paramsPed$value, colnames(myped)))  < 3){
-    stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
-  }
+  
+  # if(length(intersect(paramsPed$value, colnames(myped)))  <  3 ){
+  #   stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
+  # }
   
   myped <- cgiarBase::nrm2(pedData= myped, verbose=FALSE,returnMatrix=FALSE,
                            indivCol = paramsPed[paramsPed$parameter=="designation","value"],
