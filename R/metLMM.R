@@ -44,8 +44,9 @@ metLMM <- function(
     Markers <- Markers - 1 # center markers now
   }
   if(is.null(phenoDTfile$metadata$weather)){ # avoid an error when there is no weather information
-    provMet <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
-    phenoDTfile$metadata$weather <- provMet
+    # provMet <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
+    # phenoDTfile$metadata$weather <- provMet
+    phenoDTfile$metadata$weather <- cgiarBase::create_getData_object()$metadata$weather
   }
   names(traitFamily) <- trait
   heritLB <- rep(heritLB,length(trait))
@@ -180,22 +181,24 @@ metLMM <- function(
       }
       mydataSub <- mydataSub[which(mydataSub$designation != ""),] # remove blank designations
       ## build the environmental index
-      ei <- aggregate(predictedValue~environment, data=mydataSub,FUN=mean, na.rm=TRUE); colnames(ei)[2] <- "envIndex0"
-      ei <- ei[with(ei, order(envIndex0)), ]
-      ei$envIndex <- ei$envIndex0 - mean(ei$envIndex0)
-      colnames(ei) <- cgiarBase::replaceValues(colnames(ei), Search = "envIndex0", Replace = "value")
-      ei$parameter <- iTrait # paste0(iTrait,"-envIndex")
-      ei$trait <- "envIndex" # paste0(iTrait,"-envIndex")
+      # ei <- aggregate(predictedValue~environment, data=mydataSub,FUN=mean, na.rm=TRUE); colnames(ei)[2] <- "envIndex0"
+      # ei <- ei[with(ei, order(envIndex0)), ]
+      # ei$envIndex <- ei$envIndex0 - mean(ei$envIndex0)
+      # colnames(ei) <- cgiarBase::replaceValues(colnames(ei), Search = "envIndex0", Replace = "value")
+      # ei$parameter <- iTrait # paste0(iTrait,"-envIndex")
+      # ei$trait <- "envIndex" # paste0(iTrait,"-envIndex")
       # update the weather metadata
-      phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
-      toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","trait","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated(phenoDTfile$metadata$weather[,c("environment","parameter")])))
-      phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
+      weather <- cgiarPipeline::summaryWeather(phenoDTfile)
+      
+      # phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
+      # toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","trait","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated(phenoDTfile$metadata$weather[,c("environment","parameter")])))
+      # phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
       ## add metadata from environment(e.g., weather) as new columns of the phenotype dataset in case the user wants to model it
-      if(!is.null(phenoDTfile$metadata$weather)){
-        metas <- phenoDTfile$metadata$weather;
+      if(nrow(weather) > 0){
+        metas <- weather#phenoDTfile$metadata$weather;
         # metas$feature <- paste(metas$parameter, metas$trait, sep="_")
         set1 <- which(metas$parameter == iTrait) # set of environmental means for iTrait
-        set2 <- which(metas$parameter %in% c("mean","date","coordinate") ) # set of weather means
+        set2 <- which(metas$parameter %in% c("mean","date","coordinate","envIndex") ) # set of weather means
         metas <- metas[c(set1,set2),]
         metas$feature <- paste(metas$environment, metas$trait, metas$parameter)
         metas <- metas[!duplicated(metas$feature),]

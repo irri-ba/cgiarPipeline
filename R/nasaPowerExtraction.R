@@ -90,10 +90,13 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
 
     prov$environment <- environments[iEnv]
     # metadata
-    meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
-                parameter=c(rep("mean",3), rep("sd",3), c("coordinate", "coordinate", "date", "date")),
-                value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE), c(LAT[iEnv], LONG[iEnv], date_planted[iEnv], date_harvest[iEnv] ) )
-    )
+    meta <- data.frame(parameter=c("trait","trait","trait","latitude","longitude","year","month","day", "date","environment"),
+                       value= c("RH2M","T2M","PRECTOTCORR","LAT","LON","YEAR","MO","DY","date","environment")
+                       )
+    # meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
+    #             parameter=c(rep("mean",3), rep("sd",3), c("coordinate", "coordinate", "date", "date")),
+    #             value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE), c(LAT[iEnv], LONG[iEnv], date_planted[iEnv], date_harvest[iEnv] ) )
+    # )
     # save
     wthList[[iEnv]] <- as.data.frame(prov)
     metaList[[iEnv]] <-  meta
@@ -112,7 +115,67 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
 
 
 
-
+summaryWeather <- function(object){
+  
+  if(is.null(object$data$weather)){
+    out <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
+  }else{
+    data <- object$data$weather
+    metadata <- object$metadata$weather
+    
+    traits <- metadata[which(metadata$parameter == "trait"),"value"]
+    environ <- metadata[which(metadata$parameter == "environment"),"value"]
+    lat <- metadata[which(metadata$parameter == "latitude"),"value"]
+    lon <- metadata[which(metadata$parameter == "longitude"),"value"]
+    
+    provList <- list()
+    for(iTrait in c(traits, lat, lon) ){ # iTrait = traits[1]
+      # mean
+      prov <- aggregate(as.formula( paste(iTrait, "~", environ) ), FUN=mean, na.rm=TRUE, data=data)
+      colnames(prov)[2] <- "value"
+      prov$trait <- iTrait
+      prov$parameter <- "mean"
+      # sd
+      prov2 <- aggregate(as.formula( paste(iTrait, "~", environ) ), FUN=sd, na.rm=TRUE, data=data)
+      colnames(prov2)[2] <- "value"
+      prov2$trait <- iTrait
+      prov2$parameter <- "sd"
+      #
+      provList[[iTrait]] <- rbind(prov,prov2)
+    }
+    out <- do.call(rbind,provList)
+    
+    ###
+    data2 <- object$data$pheno
+    metadata2 <- object$metadata$pheno
+    if(!is.null(metadata2)){
+      traits2 <- metadata2[which(metadata2$parameter == "trait"),"value"]
+      environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
+      provList2 <- list()
+      for(iTrait2 in traits2){ # iTrait2 = traits2[1]
+        ei <- aggregate(as.formula(paste(iTrait2,"~environment")), data=data2,FUN=mean, na.rm=TRUE); 
+        colnames(ei)[2] <- "value"
+        ei$trait <- iTrait2
+        ei$parameter <- "mean"
+        #
+        ei2 <- ei
+        ei2$value <- ei$value - mean(ei$value, na.rm=TRUE)
+        ei2$parameter <- "envIndex" # paste0(iTrait,"-envIndex")
+        provList2[[iTrait2]] <- rbind(ei,ei2)
+      }
+      out <- rbind(out, do.call(rbind,provList2) )
+    }
+    
+  }
+  
+  
+  # meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
+  #             parameter=c(rep("mean",3), rep("sd",3), c("coordinate", "coordinate", "date", "date")),
+  #             value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE), c(LAT[iEnv], LONG[iEnv], date_planted[iEnv], date_harvest[iEnv] ) )
+  # )
+  return(out)
+  
+}
 
 
 
