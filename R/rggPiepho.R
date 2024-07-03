@@ -112,7 +112,11 @@ rggPiepho <- function(
           # mydataSub2[,"designationYear"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"year"])
           # mydataSub2[,"locationYear"] <- paste0(mydataSub2[,"location"],mydataSub2[,"year"])
           if(length(which(metaPheno$parameter == "year")) > 0){
-            fix <- paste("predictedValue ~ year + yearOfOrigin + environment")
+            if(length(table(mydataSub2$year)) > 1){
+              fix <- paste("predictedValue ~ year + yearOfOrigin + environment")
+            }else{
+              fix <- paste("predictedValue ~ yearOfOrigin + environment")
+            }
           }else{
             fix <- paste("predictedValue ~ yearOfOrigin + environment")
           }

@@ -8,7 +8,8 @@ rggMackay <- function(
     yearsToUse=NULL,
     entryTypeToUse=NULL,
     verbose=TRUE,
-    forceRules=TRUE
+    forceRules=TRUE,
+    propTopIndsPerYear=1 # by default we pick all inds per year
 ){
   ## THIS FUNCTION CALCULATES THE REALIZED GENETIC GAIN FOR SOME TRAITS
   ## IS USED IN THE BANAL APP UNDER THE METRICS MODULES
@@ -31,14 +32,15 @@ rggMackay <- function(
   if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
   mydata <- merge(mydata, myPed[,c(gTerm,fixedTerm)], by=gTerm, all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
-  if(!is.null(yearsToUse)){ # reduce the dataset
+  if(!is.null(yearsToUse)){ # reduce the dataset by years selected
     yearsToUse <- as.numeric(as.character(yearsToUse))
     mydata <- mydata[which(mydata$yearOfOrigin %in% yearsToUse),]
   }
-  if(!is.null(entryTypeToUse)){ # reduce the dataset
+  if(!is.null(entryTypeToUse)){ # reduce the dataset by entry types selected
     entryTypeToUse <- as.character(entryTypeToUse)
     mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
   }
+  # reduce dataset by top entries selected
   if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter. Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section.",call. = FALSE)}
   if(forceRules){ # if we wnforce ABI rules for minimum years of data
     if(length(unique(na.omit(mydata[,fixedTerm]))) <= 5){stop("Less than 5 years of data have been detected. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
@@ -66,6 +68,15 @@ rggMackay <- function(
     }
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
+    ## subset to top individuals declared by user
+    yearSplit <- split(mydataSub, mydataSub$yearOfOrigin)
+    yearSplit <- lapply(yearSplit, function(x){
+      y <- x[with(x, order(-predictedValue)), ]
+      y <- y[1:round(propTopIndsPerYear*nrow(y)),]
+      return(y)
+    })
+    mydataSub <- do.call(rbind, yearSplit)
+    ###
     mydataSub$environment <- as.factor(mydataSub$environment)
     mydataSub$designation <- as.factor(mydataSub$designation)
     mydataSub$predictedValue.d <- mydataSub$predictedValue/mydataSub$rel

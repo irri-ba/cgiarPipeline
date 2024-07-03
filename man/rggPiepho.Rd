@@ -95,7 +95,8 @@ final <- rggPiepho(
     verbose=TRUE,
     traitFamily=NULL,
     sampleN=50, # max number of individuals per environment to sample
-    bootstrappingN=10
+    bootstrappingN=10,
+    forceRules=TRUE
 )
 
 tail(final$metrics,10)
