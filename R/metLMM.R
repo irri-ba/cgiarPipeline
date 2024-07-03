@@ -197,15 +197,15 @@ metLMM <- function(
       if(nrow(weather) > 0){
         metas <- weather#phenoDTfile$metadata$weather;
         # metas$feature <- paste(metas$parameter, metas$trait, sep="_")
-        set1 <- which(metas$parameter == iTrait) # set of environmental means for iTrait
-        set2 <- which(metas$parameter %in% c("mean","date","coordinate","envIndex") ) # set of weather means
-        metas <- metas[c(set1,set2),]
+        set1 <- which(metas$trait == iTrait) # set of environmental means for iTrait
+        set2 <- which(metas$parameter %in% c("mean","date","coordinate","envIndex") ) # set of weather means  "mean","date","coordinate",
+        metas <- metas[intersect(set1,set2),]
         metas$feature <- paste(metas$environment, metas$trait, metas$parameter)
         metas <- metas[!duplicated(metas$feature),]
         # metas <- metas[which(metas[,"trait"] == iTrait),]
-        metas <- reshape(metas[,c("environment","trait","value")], direction = "wide",
+        metas <- reshape(metas[,c("environment","parameter","value")], direction = "wide",
                          idvar = "environment",
-                         timevar = "trait", v.names = "value", sep= "_")
+                         timevar = c("parameter"), v.names = "value", sep= "_")
         colnames(metas) <- gsub("value_","", colnames(metas))
         metasClass <- unlist(lapply(metas,class))
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]

@@ -102,14 +102,14 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
     metaList[[iEnv]] <-  meta
   }
   WTH <- do.call(rbind,wthList)
-  descriptive <- do.call(rbind, metaList)
+  META <- do.call(rbind, metaList)
 
 # descriptive  --------------------------------------------------------
   # descriptive<-summary(dplyr::select(WTH,RH2M,T2M,PRECTOTCORR))
 
 # Outputs -----------------------------------------------------------------
-  output<- list(WTH = WTH,
-                descriptive = descriptive)
+  output<- list(data = WTH,
+                metadata = META)
   return(output)
 }
 
