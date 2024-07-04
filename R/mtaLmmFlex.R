@@ -65,7 +65,7 @@ mtaLmmFlex <- function(
   # mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   
   # add the other available columns to the dataset
-  ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
+  ff <- formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
   mydata <<- ff$predictions
   
   # if the user provides two ids with same trait and environments kill the job
