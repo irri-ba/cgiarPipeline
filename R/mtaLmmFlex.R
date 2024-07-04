@@ -351,18 +351,28 @@ mtaLmmFlex <- function(
             pp <- means <- sds <- cvs <- r2s <- list()
             
             intercepts0 <- list()
-            for(iEffect in names(effs)){ 
-              provInter <- aggregate(as.formula( paste("predictedValue", "~", iEffect) ), data=mydataSub, FUN=mean, na.rm=TRUE)
-              provInter[,paste0(iEffect,"2")] <- paste0("L.",provInter[,iEffect]) 
-              intercepts0[[iEffect]] <- provInter
+            for(iEffect in names(effs)){ # iEffect = names(effs)[1]  produce intercepts for models of the type (intercept|slope) 
+              if( length( grep(":",iEffect) ) > 0 ){
+                # intercepts0[[iEffect]] <- data.frame(id=iEffect,predictedValue=intercept,id2=paste0("L.", iEffect )  )
+                varsEffect <- strsplit(iEffect,":")[[1]]
+                provVarsEffect <- data.frame(y=mydataSub[,"predictedValue"], x=apply( mydataSub[ , varsEffect ] , 1 , paste , collapse = ":" ) )
+                provInter <- aggregate(as.formula( paste("y", "~", "x") ), data=provVarsEffect, FUN=mean, na.rm=TRUE)
+                colnames(provInter) <- c(iEffect,"predictedValue")
+                provInter[,paste0(iEffect,"2")] <- paste0("L.",provInter[,iEffect]) 
+                intercepts0[[iEffect]] <- provInter
+              }else{
+                provInter <- aggregate(as.formula( paste("predictedValue", "~", iEffect) ), data=mydataSub, FUN=mean, na.rm=TRUE)
+                provInter[,paste0(iEffect,"2")] <- paste0("L.",provInter[,iEffect]) 
+                intercepts0[[iEffect]] <- provInter
+              }
             }; intercepts0[["inter"]] <- data.frame(id="(Intercept)",predictedValue=intercept,id2="L.(Intercept)")
             
             for(iEffect in names(effs)){ # iEffect = names(effs)[1]
               Vg <- vars[which((vars$grp == iEffect) & (is.na(vars$var2) )), "vcov"]
               provEffects <- as.data.frame(effs[[iEffect]]); 
               ## add the proper intercept to the estimate
-              if( traitFamily[iTrait] == "gaussian(link = 'identity')"){
-                for(iInter in 1:length(intercepts0)){ # iInter=3
+              if( traitFamily[iTrait] == "gaussian(link = 'identity')" ){
+                for(iInter in 1:length(intercepts0)){ # iInter=1
                   v1 <- which(colnames(provEffects) %in% intercepts0[[iInter]][,1])
                   if(length(v1) > 0){
                     rownames(intercepts0[[iInter]]) <- intercepts0[[iInter]][,1]

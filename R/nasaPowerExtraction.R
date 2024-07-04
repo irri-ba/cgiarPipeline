@@ -101,8 +101,8 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
     wthList[[iEnv]] <- as.data.frame(prov)
     metaList[[iEnv]] <-  meta
   }
-  WTH <- do.call(rbind,wthList)
-  META <- do.call(rbind, metaList)
+  WTH <- unique(do.call(rbind,wthList))
+  META <- unique(do.call(rbind, metaList))
 
 # descriptive  --------------------------------------------------------
   # descriptive<-summary(dplyr::select(WTH,RH2M,T2M,PRECTOTCORR))
@@ -127,7 +127,7 @@ summaryWeather <- function(object){
     environ <- metadata[which(metadata$parameter == "environment"),"value"]
     lat <- metadata[which(metadata$parameter == "latitude"),"value"]
     lon <- metadata[which(metadata$parameter == "longitude"),"value"]
-    
+    ## summarize traits
     provList <- list()
     for(iTrait in c(traits, lat, lon) ){ # iTrait = traits[1]
       # mean
@@ -145,7 +145,7 @@ summaryWeather <- function(object){
     }
     out <- do.call(rbind,provList)
     
-    ###
+    ### summarize environmental indices
     data2 <- object$data$pheno
     metadata2 <- object$metadata$pheno
     if(!is.null(metadata2)){
