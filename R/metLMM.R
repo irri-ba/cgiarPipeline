@@ -188,7 +188,7 @@ metLMM <- function(
       # ei$parameter <- iTrait # paste0(iTrait,"-envIndex")
       # ei$trait <- "envIndex" # paste0(iTrait,"-envIndex")
       # update the weather metadata
-      weather <- cgiarPipeline::summaryWeather(phenoDTfile)
+      weather <- cgiarPipeline::summaryWeather(object=phenoDTfile)
       
       # phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
       # toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","trait","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated(phenoDTfile$metadata$weather[,c("environment","parameter")])))

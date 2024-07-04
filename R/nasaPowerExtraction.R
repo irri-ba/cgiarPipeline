@@ -118,7 +118,27 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
 summaryWeather <- function(object){
   
   if(is.null(object$data$weather)){
-    out <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
+    out <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(out) <- c("environment", "trait", "parameter" ,  "value")
+    ### summarize environmental indices
+    data2 <- object$data$pheno
+    metadata2 <- object$metadata$pheno
+    if(!is.null(metadata2)){
+      traits2 <- metadata2[which(metadata2$parameter == "trait"),"value"]
+      environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
+      provList2 <- list()
+      for(iTrait2 in traits2){ # iTrait2 = traits2[1]
+        ei <- aggregate(as.formula(paste(iTrait2,"~environment")), data=data2,FUN=mean, na.rm=TRUE); 
+        colnames(ei)[2] <- "value"
+        ei$trait <- iTrait2
+        ei$parameter <- "mean"
+        #
+        ei2 <- ei
+        ei2$value <- ei$value - mean(ei$value, na.rm=TRUE)
+        ei2$parameter <- "envIndex" # paste0(iTrait,"-envIndex")
+        provList2[[iTrait2]] <- rbind(ei,ei2)
+      }
+      out <- rbind(out, do.call(rbind,provList2) )
+    }
   }else{
     data <- object$data$weather
     metadata <- object$metadata$weather
