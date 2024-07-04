@@ -478,6 +478,7 @@ mtaLmmFlex <- function(
             pp$reliability <- 1e-6
             pp$trait <- iTrait
             pp$entryType <- ""
+            pp$environment <- "(Intercept)"
             cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
             ## save metrics
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
