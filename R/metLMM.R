@@ -411,18 +411,16 @@ metLMM <- function(
                   }else{ A2inv <- diag(1)*mean(diag(A1inv)) } # there's only one individual to be added
                   colnames(A2inv) <- rownames(A2inv) <- differ
                 }else{A2inv <- matrix(0,0,0)}
-                Ainv <- sommer::adiag1(A1inv,A2inv)
-                Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
-                colnames(Ainv) <- rownames(Ainv) <- c(colnames(A1inv), colnames(A2inv))
-                A1inv <- NULL; A2inv <- NULL;
+                Ainv <- A1inv # sommer::adiag1(A1inv,A2inv)
+                # Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
+                # colnames(Ainv) <- rownames(Ainv) <- c(colnames(A1inv), colnames(A2inv))
+                # A1inv <- NULL; A2inv <- NULL;
                 levelsInAinv <- colnames(Ainv)
                 myGinverse <- list(designation=Ainv)
               }else{
                 levelsInAinv <- colnames(Ainv)
                 myGinverse <- list(designation=Ainv)
               }
-              
-              
               
             }else{ # blue model
               inter <- character()
@@ -440,6 +438,7 @@ metLMM <- function(
             if(verbose){print("Ignoring weights in the analysis. Residual variance will be estimated.")  }
           }
           # options(spam.cholsymmetrycheck=FALSE)
+          mydataSub <- mydataSub[which(mydataSub$designation %in% colnames(Ainv)),]
           mix <- try(
             LMMsolver::LMMsolve(fixed =as.formula(fix),
                                 random = ranFormulation,

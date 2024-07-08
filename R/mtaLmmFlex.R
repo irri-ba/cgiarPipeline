@@ -230,12 +230,12 @@ mtaLmmFlex <- function(
                     A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)
                   }
                   A <- A + diag(1e-4, ncol(A), ncol(A))
-                  if(length(withoutMarkers) > 0){
-                    newNames <- c(colnames(A), withoutMarkers)
-                    Ax <- diag(length(withoutMarkers))*mean(diag(A)); 
-                    A <- bdiag(A, Ax)
-                    colnames(A) <- rownames(A) <- newNames
-                  }
+                  # if(length(withoutMarkers) > 0){ # inds without markers
+                  #   newNames <- c(colnames(A), withoutMarkers)
+                  #   Ax <- diag(length(withoutMarkers))*mean(diag(A)); 
+                  #   A <- bdiag(A, Ax)
+                  #   colnames(A) <- rownames(A) <- newNames
+                  # }
                 }
                 
               }
@@ -280,7 +280,9 @@ mtaLmmFlex <- function(
               names(relmat) <- paste(inputFormulation[[iVcov]]$right, collapse = ":")
             }
           }
-          mydataSub <<-mydataSub
+          mydataSub <- mydataSub[which(mydataSub$designation %in% colnames(A)),] # mydataSub
+          mydataSub <<- mydataSub
+          # print(str(relmat))
           # A <<- A
           relmat <<- relmat
           # print(traitFamily)
@@ -300,6 +302,7 @@ mtaLmmFlex <- function(
             )
             controlTrait$optimizer <- controlTrait$optimizer[1]
           }
+          # print(controlTrait)
           mix <- try(
             lmebreed(formula=form, 
                      family = eval(parse(text = traitFamily[iTrait])),  #REML = TRUE,
@@ -316,7 +319,7 @@ mtaLmmFlex <- function(
           )
           # print(mix)
           # summary(mix)
-          if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
+          if( !inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             
             ## save the model formula used
             currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
