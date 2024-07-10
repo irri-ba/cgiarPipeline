@@ -416,9 +416,11 @@ metLMM <- function(
                 # colnames(Ainv) <- rownames(Ainv) <- c(colnames(A1inv), colnames(A2inv))
                 # A1inv <- NULL; A2inv <- NULL;
                 levelsInAinv <- colnames(Ainv)
+                Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
                 myGinverse <- list(designation=Ainv)
               }else{
                 levelsInAinv <- colnames(Ainv)
+                Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
                 myGinverse <- list(designation=Ainv)
               }
               
