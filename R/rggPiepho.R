@@ -2,7 +2,6 @@ rggPiepho <- function(
     phenoDTfile= NULL,
     analysisId=NULL,
     trait=NULL, # per trait
-    deregress=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
     verbose=TRUE,
@@ -57,6 +56,15 @@ rggPiepho <- function(
     if(length(unique(na.omit(mydata[,fixedTerm]))) <= 5){stop("Less than 5 years of data have been detected. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
   }else{
     if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
+  }
+  # define wether we should deregress or not
+  modelingInput <- phenoDTfile$modeling
+  modelingInput <- modelingInput[which(modelingInput$analysisId == analysisId),]
+  designationEffectType <- unique(modelingInput[which(modelingInput$parameter == "designationEffectType"),"value"])
+  if(designationEffectType %in% c("BLUP","GBLUP","PBLUP","SSBLUP") ){
+    deregress=TRUE
+  }else{ # BLUE
+    deregress=FALSE
   }
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()

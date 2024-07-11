@@ -12,7 +12,6 @@ rggPiepho(
     phenoDTfile= NULL,
     analysisId=NULL,
     trait=NULL, 
-    deregress=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
     verbose=TRUE,
@@ -32,9 +31,6 @@ A numeric id to link to the predictions to be used for the analysis.
 }
 \item{trait}{
 A character vector with the traits that should be fitted.
-}
-\item{deregress}{
-Should we deregress the estimates by dividing over the reliability before performing the realized genetic gain calculation.
 }
 \item{yearsToUse}{
 Selection of the years of origin associated to the tested material to use in the calculation.
@@ -89,7 +85,6 @@ final <- rggPiepho(
     phenoDTfile= result,
     analysisId=result$status$analysisId[2],
     trait="Ear_Height_cm", # per trait
-    deregress=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
     verbose=TRUE,
