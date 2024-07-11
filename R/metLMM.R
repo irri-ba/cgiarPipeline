@@ -195,18 +195,29 @@ metLMM <- function(
       # phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
       ## add metadata from environment(e.g., weather) as new columns of the phenotype dataset in case the user wants to model it
       if(nrow(weather) > 0){
-        metas <- weather#phenoDTfile$metadata$weather;
-        # metas$feature <- paste(metas$parameter, metas$trait, sep="_")
-        set1 <- which(metas$trait == iTrait) # set of environmental means for iTrait
-        set2 <- which(metas$parameter %in% c("mean","date","coordinate","envIndex") ) # set of weather means  "mean","date","coordinate",
-        metas <- metas[intersect(set1,set2),]
-        metas$feature <- paste(metas$environment, metas$trait, metas$parameter)
-        metas <- metas[!duplicated(metas$feature),]
-        # metas <- metas[which(metas[,"trait"] == iTrait),]
-        metas <- reshape(metas[,c("environment","parameter","value")], direction = "wide",
-                         idvar = "environment",
-                         timevar = c("parameter"), v.names = "value", sep= "_")
-        colnames(metas) <- gsub("value_","", colnames(metas))
+        
+        
+        weather$traitParameter <- paste(weather$trait, weather$parameter, sep="_")
+        metas <- reshape(weather[,-which(colnames(weather)%in%c("trait","parameter"))], direction = "wide", idvar = "environment",
+                        timevar = c("traitParameter"), v.names = "value", sep= "_")
+        colnames(metas) <- gsub("value_","",colnames(metas))
+        # predictions <- merge(predictions, wide, by="environment", all.x = TRUE)
+        
+        
+        
+        
+        # metas <- weather#phenoDTfile$metadata$weather;
+        # set1 <- which(metas$trait == iTrait) # set of environmental means for iTrait
+        # set2 <- which(metas$parameter %in% c("mean","date","coordinate","envIndex") ) # set of weather means  "mean","date","coordinate",
+        # metas <- metas[intersect(set1,set2),]
+        # metas$feature <- paste(metas$environment, metas$trait, metas$parameter)
+        # metas <- metas[!duplicated(metas$feature),]
+        # # metas <- metas[which(metas[,"trait"] == iTrait),]
+        # metas <- reshape(metas[,c("environment","parameter","value")], direction = "wide",
+        #                  idvar = "environment",
+        #                  timevar = c("parameter"), v.names = "value", sep= "_")
+        # colnames(metas) <- gsub("value_","", colnames(metas))
+        
         metasClass <- unlist(lapply(metas,class))
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]
         # center variables
