@@ -13,12 +13,12 @@ rggMackay(
     analysisId=NULL,
     trait=NULL, # per trait
     deregressWeight=1,
-    deregress=FALSE,
     partition=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
     verbose=TRUE,
-    forceRules=TRUE
+    forceRules=TRUE,
+    propTopIndsPerYear=1
 )
 }
 
@@ -35,9 +35,6 @@ A character vector with the traits that should be fitted.
 \item{deregressWeight}{
 Should any weight be applied to the deregressed value (not recommended but available). 
 }
-\item{deregress}{
-Should we deregress the estimates by dividing over the reliability before performing the realized genetic gain calculation.
-}
 \item{partition}{
 When very few years of data are present this option will allow the user to calculate the gain for all 2-year combinations and then average these rates.
 }
@@ -52,6 +49,9 @@ Should the logs or warninig messages of the analysis be printed?
 }
 \item{forceRules}{
 A TRUE/FALSE statement declaring if we should enforce the rule of Excellence in Breeding of minimum 6 years of data to perform realized genetic gain analysis.
+}
+\item{propTopIndsPerYear}{
+A value between 0 and 1 to indicate the proportion of individuals to pick per year in case we want to focus the analysis on the top performing individuals per years.
 }
 
 }
@@ -90,7 +90,9 @@ final <- rggMackay(
     partition=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
-    verbose=TRUE
+    verbose=TRUE,
+    forceRules=TRUE,
+    propTopIndsPerYear=1
 )
 
 tail(final$metrics)

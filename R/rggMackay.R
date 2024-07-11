@@ -3,7 +3,6 @@ rggMackay <- function(
     analysisId=NULL,
     trait=NULL, # per trait
     deregressWeight=1,
-    deregress=FALSE,
     partition=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
@@ -46,6 +45,15 @@ rggMackay <- function(
     if(length(unique(na.omit(mydata[,fixedTerm]))) <= 5){stop("Less than 5 years of data have been detected. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
   }else{
     if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
+  }
+  # define wether we should deregress or not
+  modelingInput <- phenoDTfile$modeling
+  modelingInput <- modelingInput[which(modelingInput$analysisId == analysisId),]
+  designationEffectType <- unique(modelingInput[which(modelingInput$parameter == "designationEffectType"),"value"])
+  if(designationEffectType %in% c("BLUP","GBLUP","PBLUP","SSBLUP") ){
+    deregress=TRUE
+  }else{ # BLUE
+    deregress=FALSE
   }
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
@@ -90,11 +98,11 @@ rggMackay <- function(
         if(deregress){
           mydataSub$predictedValue <- mydataSub$predictedValue.d
           if(verbose){
-            print("Deregressing predicted values using the reliability. Assuming you are providing BLUPs.")
+            print("Deregressing predicted values using the reliability. We detected that you are providing BLUPs.")
           }
         }else{
           if(verbose){
-            print("Using predicted values directly. Assuming you are providing BLUEs.")
+            print("Using predicted values directly. We detected that you are providing BLUEs.")
           }
         }
         fix <- paste("predictedValue ~",paste(fixedTerm, collapse=" + "))
