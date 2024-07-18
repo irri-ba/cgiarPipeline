@@ -92,16 +92,6 @@ metLMM <- function(
   #############################
   # defining the name of the surrogate depending on the model
   surrogate <- c("TGV","EBV","GEBV","GEBV","ssGEBV","PV"); names(surrogate) <- c("blup","pblup","gblup","rrblup","ssgblup","blue")
-  # if(modelType == "blup"){
-  #   surrogate <- "TGV"
-  # }else if(modelType == "pblup"){
-  #   surrogate <- "EBV"
-  # }else if(modelType %in% c("gblup","rrblup")){
-  #   surrogate <- "GEBV"
-  # }else if(modelType == "ssgblup"){
-  #   surrogate <- "ssGEBV"
-  # }else{surrogate <- "PV"}
-  # if user didn't provide a table for which environments should be included, make it! include all environments as default
   if(is.null(envsToInclude)){
     envsToInclude=  as.data.frame( do.call( rbind, list (with(mydata, table(environment,trait)) ) ) )
     bad <- which(envsToInclude <= 1, arr.ind = TRUE)
@@ -451,7 +441,9 @@ metLMM <- function(
             if(verbose){print("Ignoring weights in the analysis. Residual variance will be estimated.")  }
           }
           # options(spam.cholsymmetrycheck=FALSE)
-          mydataSub <- mydataSub[which(mydataSub$designation %in% colnames(Ainv)),]
+          if(modelType != "blue"){
+            mydataSub <- mydataSub[which(mydataSub$designation %in% colnames(Ainv)),]
+          }
           mix <- try(
             LMMsolver::LMMsolve(fixed =as.formula(fix),
                                 random = ranFormulation,
