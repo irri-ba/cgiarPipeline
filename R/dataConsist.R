@@ -34,7 +34,7 @@
 #------------------------------------------------------------------------------
 
 checkNames <- function(crop,
-                       phenoDTfile, # The data object structure produced from bioflow
+                       phenoDTfile # The data object structure produced from bioflow
                        ) {
   
   # Get internal copy of data and convert to short labels
