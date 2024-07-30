@@ -127,7 +127,8 @@ summaryWeather <- function(object){
       environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
       provList2 <- list()
       for(iTrait2 in traits2){ # iTrait2 = traits2[1]
-        ei <- aggregate(as.formula(paste(iTrait2,"~environment")), data=data2,FUN=mean, na.rm=TRUE); 
+        data2$traitUsed <- data2[,iTrait2]
+        ei <- aggregate(as.formula(paste("traitUsed","~environment")), data=data2,FUN=mean, na.rm=TRUE); 
         colnames(ei)[2] <- "value"
         ei$trait <- iTrait2
         ei$parameter <- "mean"
