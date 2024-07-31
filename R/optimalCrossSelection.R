@@ -39,10 +39,10 @@ ocs <- function(
   }
   
   if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
+    paramsPed <- phenoDTfile$metadata$pedigree
     if(length(intersect(paramsPed$value, colnames(phenoDTfile$data$pedigree)))  < 3){
       stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
     }
-    paramsPed <- phenoDTfile$metadata$pedigree
     N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree,
                          indivCol = paramsPed[paramsPed$parameter=="designation","value"],
                          damCol = paramsPed[paramsPed$parameter=="mother","value"],
