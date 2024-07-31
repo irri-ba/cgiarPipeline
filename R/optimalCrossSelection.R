@@ -16,8 +16,8 @@ ocs <- function(
   ocsAnalysisId <- as.numeric(Sys.time())
   if(is.null(phenoDTfile)){stop("Please provide the predictions", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the analysisId", call. = FALSE)}
-  if(is.null(relDTfile)){stop("Please make sure that you have the data to calculate one of the following relationship matrices: 'grm', 'nrm', or 'both' ", call. = FALSE)}
-  if(nchar(relDTfile)==0){stop("Please make sure that you have the data to calculate one of the following relationship matrices: 'grm', 'nrm', or 'both' ", call. = FALSE)}
+  if(is.null(relDTfile)){stop("Please make sure that you have the marker or pedigree data to calculate one of the following relationship matrices: 'grm', 'nrm', or 'both' ", call. = FALSE)}
+  if(nchar(relDTfile)==0){stop("Please make sure that you have the marker or pedigree data to calculate one of the following relationship matrices: 'grm', 'nrm', or 'both' ", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) > 1){stop(paste0(" Only one trait can be used for optimal contribution. We suggest using an index."), call. = FALSE)}
   if(length(environment) > 1){stop(paste0(" Only one environment can be used for optimal contribution. We suggest using an across environment value."), call. = FALSE)}
