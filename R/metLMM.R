@@ -44,8 +44,6 @@ metLMM <- function(
     Markers <- Markers - 1 # center markers now
   }
   if(is.null(phenoDTfile$metadata$weather)){ # avoid an error when there is no weather information
-    # provMet <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
-    # phenoDTfile$metadata$weather <- provMet
     phenoDTfile$metadata$weather <- cgiarBase::create_getData_object()$metadata$weather
   }
   names(traitFamily) <- trait
@@ -170,43 +168,16 @@ metLMM <- function(
         mydataSub[,iTerm] <- as.factor(mydataSub[,iTerm]) # move to factor
       }
       mydataSub <- mydataSub[which(mydataSub$designation != ""),] # remove blank designations
-      ## build the environmental index
-      # ei <- aggregate(predictedValue~environment, data=mydataSub,FUN=mean, na.rm=TRUE); colnames(ei)[2] <- "envIndex0"
-      # ei <- ei[with(ei, order(envIndex0)), ]
-      # ei$envIndex <- ei$envIndex0 - mean(ei$envIndex0)
-      # colnames(ei) <- cgiarBase::replaceValues(colnames(ei), Search = "envIndex0", Replace = "value")
-      # ei$parameter <- iTrait # paste0(iTrait,"-envIndex")
-      # ei$trait <- "envIndex" # paste0(iTrait,"-envIndex")
       # update the weather metadata
       weather <- cgiarPipeline::summaryWeather(object=phenoDTfile)
       
-      # phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
-      # toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","trait","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated(phenoDTfile$metadata$weather[,c("environment","parameter")])))
-      # phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
       ## add metadata from environment(e.g., weather) as new columns of the phenotype dataset in case the user wants to model it
       if(nrow(weather) > 0){
-        
         
         weather$traitParameter <- paste(weather$trait, weather$parameter, sep="_")
         metas <- reshape(weather[,-which(colnames(weather)%in%c("trait","parameter"))], direction = "wide", idvar = "environment",
                         timevar = c("traitParameter"), v.names = "value", sep= "_")
         colnames(metas) <- gsub("value_","",colnames(metas))
-        # predictions <- merge(predictions, wide, by="environment", all.x = TRUE)
-        
-        
-        
-        
-        # metas <- weather#phenoDTfile$metadata$weather;
-        # set1 <- which(metas$trait == iTrait) # set of environmental means for iTrait
-        # set2 <- which(metas$parameter %in% c("mean","date","coordinate","envIndex") ) # set of weather means  "mean","date","coordinate",
-        # metas <- metas[intersect(set1,set2),]
-        # metas$feature <- paste(metas$environment, metas$trait, metas$parameter)
-        # metas <- metas[!duplicated(metas$feature),]
-        # # metas <- metas[which(metas[,"trait"] == iTrait),]
-        # metas <- reshape(metas[,c("environment","parameter","value")], direction = "wide",
-        #                  idvar = "environment",
-        #                  timevar = c("parameter"), v.names = "value", sep= "_")
-        # colnames(metas) <- gsub("value_","", colnames(metas))
         
         metasClass <- unlist(lapply(metas,class))
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]
@@ -343,7 +314,7 @@ metLMM <- function(
               myGinverse <- NULL
               groupTrait <- LGrp
               genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=designationFlevels, withMarkOnly=onlyInA)
-            }else if(modelTypeTrait[iTrait] %in% "gblup"){ # if user wants to do a gblup, pblup or ssgblup model
+            }else if(modelTypeTrait[iTrait] %in% c("gblup","pblup")){ # if user wants to do a gblup, pblup or ssgblup model
               designationFlevels <- as.character(unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"]))
               
               if(modelTypeTrait[iTrait] %in% c("pblup","ssgblup")){ # we need to calculate NRM
@@ -351,6 +322,7 @@ metLMM <- function(
                 if(length(intersect(paramsPed$value, colnames(phenoDTfile$data$pedigree)))  < 3){
                   stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
                 }
+                # print("N was calculated")
                 N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree,
                                      indivCol = paramsPed[paramsPed$parameter=="designation","value"],
                                      damCol = paramsPed[paramsPed$parameter=="mother","value"],
@@ -413,15 +385,14 @@ metLMM <- function(
                   colnames(A2inv) <- rownames(A2inv) <- differ
                 }else{A2inv <- matrix(0,0,0)}
                 Ainv <- A1inv # sommer::adiag1(A1inv,A2inv)
-                # Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
-                # colnames(Ainv) <- rownames(Ainv) <- c(colnames(A1inv), colnames(A2inv))
-                # A1inv <- NULL; A2inv <- NULL;
                 levelsInAinv <- colnames(Ainv)
                 Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
+                Ainv <<- Ainv
                 myGinverse <- list(designation=Ainv)
               }else{
                 levelsInAinv <- colnames(Ainv)
                 Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
+                Ainv <<- Ainv
                 myGinverse <- list(designation=Ainv)
               }
               
@@ -440,10 +411,12 @@ metLMM <- function(
             weightsFormulation=NULL
             if(verbose){print("Ignoring weights in the analysis. Residual variance will be estimated.")  }
           }
+          # print(N[1:4,1:4])
           # options(spam.cholsymmetrycheck=FALSE)
           if(modelType != "blue"){
             mydataSub <- mydataSub[which(mydataSub$designation %in% colnames(Ainv)),]
           }
+         
           mix <- try(
             LMMsolver::LMMsolve(fixed =as.formula(fix),
                                 random = ranFormulation,
