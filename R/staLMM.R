@@ -241,7 +241,7 @@ staLMM <- function(
               mixRandom <- try( # first model with genotypes as random
                 LMMsolver::LMMsolve(fixed =as.formula(fixedFormulaForRanModel),
                                     random = as.formula(randomFormulaForRanModel),
-                                    spline = ~spl2D(x1 = row, x2 = col, nseg = c(6, 10)), # newSpline, #trace = TRUE,
+                                    spline = newSpline, #trace = TRUE,
                                     family = eval(parse(text = traitFamily[iTrait])),
                                     data = mydataSub, maxit = maxit),
                 silent = TRUE
