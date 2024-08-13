@@ -148,6 +148,7 @@ staLMM <- function(
       mydataSub$trait <- mydataSub[,iTrait]
       # make factors
       for(iEd in c("environment","trial","row","col","rep","iBlock")){
+        if(iEd %in% c("row","col")){mydataSub[,iEd] <- as.numeric(mydataSub[,iEd])}
         # if(iEd %in% colnames(mydataSub)){
         mydataSub[,paste0(iEd,"F")] <-  as.factor(mydataSub[,iEd])
         # }else{  mydataSub[,paste0(iEd,"F")] <- NA; mydataSub[,iEd] <- NA   }
@@ -223,7 +224,7 @@ staLMM <- function(
           if((length(mde$used$environmentF$rowF) == 0) & (length(mde$used$environmentF$colF) == 0)){
             newSpline <- NULL
           }else{
-            newSpline = as.formula("~spl2D(x1 = row, x2 = col, nseg = c(10, 10))")
+            newSpline = as.formula(paste("~spl2D(x1 = row, x2 = col, nseg = c(",min(c(nrow(gridCheck)/2, 10)),",", min(c(ncol(gridCheck)/2, 10)),") )"))
           }
           
           for(iGenoUnit in genoUnitTraitField){ # iGenoUnit <- genoUnitTraitField[1]
@@ -240,7 +241,7 @@ staLMM <- function(
               mixRandom <- try( # first model with genotypes as random
                 LMMsolver::LMMsolve(fixed =as.formula(fixedFormulaForRanModel),
                                     random = as.formula(randomFormulaForRanModel),
-                                    spline = newSpline, #trace = TRUE,
+                                    spline = ~spl2D(x1 = row, x2 = col, nseg = c(6, 10)), # newSpline, #trace = TRUE,
                                     family = eval(parse(text = traitFamily[iTrait])),
                                     data = mydataSub, maxit = maxit),
                 silent = TRUE
