@@ -145,7 +145,7 @@ staLMM <- function(
       if(verbose){cat(paste("Analyzing field", iField,"\n"))}
       # subset data
       mydataSub <- droplevels(mydata[which(as.character(mydata$environment) %in% iField),])
-      mydataSub$trait <- mydataSub[,iTrait]
+      mydataSub$trait <- as.numeric(mydataSub[,iTrait])
       # make factors
       for(iEd in c("environment","trial","row","col","rep","iBlock")){
         if(iEd %in% c("row","col")){mydataSub[,iEd] <- as.numeric(mydataSub[,iEd])}
@@ -224,7 +224,7 @@ staLMM <- function(
           if((length(mde$used$environmentF$rowF) == 0) & (length(mde$used$environmentF$colF) == 0)){
             newSpline <- NULL
           }else{
-            newSpline = as.formula(paste("~spl2D(x1 = row, x2 = col, nseg = c(",min(c(nrow(gridCheck)/2, 10)),",", min(c(ncol(gridCheck)/2, 10)),") )"))
+            newSpline = as.formula(paste("~spl2D(x1 = row, x2 = col, nseg = c(",min(c(round(nrow(gridCheck)/2), 10)),",", min(c(round(ncol(gridCheck)/2), 10)),") )"))
           }
           
           for(iGenoUnit in genoUnitTraitField){ # iGenoUnit <- genoUnitTraitField[1]
