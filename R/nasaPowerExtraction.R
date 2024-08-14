@@ -152,12 +152,12 @@ summaryWeather <- function(object){
     provList <- list()
     for(iTrait in c(traits, lat, lon) ){ # iTrait = traits[1]
       # mean
-      prov <- aggregate(as.formula( paste(iTrait, "~", environ) ), FUN=mean, na.rm=TRUE, data=data)
+      prov <- aggregate(as.formula( paste(iTrait, "~", "environment") ), FUN=mean, na.rm=TRUE, data=data)
       colnames(prov)[2] <- "value"
       prov$trait <- iTrait
       prov$parameter <- "mean"
       # sd
-      prov2 <- aggregate(as.formula( paste(iTrait, "~", environ) ), FUN=sd, na.rm=TRUE, data=data)
+      prov2 <- aggregate(as.formula( paste(iTrait, "~", "environment") ), FUN=sd, na.rm=TRUE, data=data)
       colnames(prov2)[2] <- "value"
       prov2$trait <- iTrait
       prov2$parameter <- "sd"
