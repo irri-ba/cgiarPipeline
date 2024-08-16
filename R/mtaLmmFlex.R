@@ -266,6 +266,7 @@ mtaLmmFlex <- function(
           # save.image(file="strangeBug.RData")
           relmat <- list(designation=A)
           form <<- as.formula( paste("predictedValue", "~", ff$form[[iTrait]])  )
+          # add relationship matrices when needed
           for(iVcov in 1:length(inputFormulation)){ # iVcov=1
             if("designation" %in% inputFormulation[[iVcov]]$right){
               toAdd <- setdiff(inputFormulation[[iVcov]]$right, "designation")
@@ -275,16 +276,19 @@ mtaLmmFlex <- function(
                   e <- which( inputFormulation[[iVcov]]$right == iTerm)
                   d <- which( inputFormulation[[iVcov]]$right == "designation")
                   E <- diag(length(lvs)); colnames(E) <- rownames(E) <- lvs
-                  if(e > d){
-                    A <- kronecker(A,E, make.dimnames = TRUE)
-                  }else{A <- kronecker(E,A, make.dimnames = TRUE)}
+                  if(e > d){ # depending on the order the kronecker product is different
+                    AE <- kronecker(A,E, make.dimnames = TRUE)
+                  }else{AE <- kronecker(E,A, make.dimnames = TRUE)}
+                  AElist <- list(AE)
+                  names(AElist) <- paste(inputFormulation[[iVcov]]$right, collapse = ":")
+                  relmat <- c(relmat,AElist)
                 }
               }
-              relmat <- list(A)
-              names(relmat) <- paste(inputFormulation[[iVcov]]$right, collapse = ":")
+              
             }
           }
-          mydataSub <- mydataSub[which(mydataSub$designation %in% colnames(A)),] # mydataSub
+          namesInRelmats <- unlist(lapply(relmat, function(x){colnames(x)}))
+          mydataSub <- mydataSub[which(mydataSub$designation %in% namesInRelmats),] # mydataSub
           mydataSub <<- mydataSub
           # print(str(relmat))
           # A <<- A
