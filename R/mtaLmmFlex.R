@@ -67,6 +67,10 @@ mtaLmmFlex <- function(
   # add the other available columns to the dataset
   ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
   mydata <<- ff$predictions
+  # detect if we expect FA terms
+  nPCs <- unlist(lapply(inputFormulation, function(x){x$nPC}))
+  areThereFas <- ifelse(sum(nPCs)>0,TRUE,FALSE)
+  if(areThereFas){faTerms <- inputFormulation[[which(nPCs>0)]]$right}else{faTerms <- character()}
   
   # if the user provides two ids with same trait and environments kill the job
   allTraitsInMyData <- unique(na.omit(mydata$trait))
@@ -340,6 +344,21 @@ mtaLmmFlex <- function(
             blues$entryType <- "fixedEffect"
             
             effs <- lme4breeding::ranef(object=mix, condVar=TRUE)
+            
+            effsForBLUP <- effs
+            if(areThereFas){
+              for(iFaTerm in faTerms){ # iFaTerm = faTerms[1]
+                provEffs <- effsForBLUP[[iFaTerm]]
+                pcCols <- grep("PC[0-9]_",colnames(provEffs))
+                loadingsX <<- ff$loadingsTraits[[iTrait]][[iFaTerm]]
+                uRR <- as.matrix(provEffs[,pcCols]) %*% t(as.matrix(loadingsX))
+                # replace PC blups by rotated
+                provEffs <- provEffs[,-c(pcCols)]
+                if(ncol(provEffs)>0){ provEffs <- provEffs+uRR }else{provEffs <- cbind(uRR, provEffs)}
+                effsForBLUP[[iFaTerm]] <- provEffs
+              }
+            }
+            
             intercept <- lme4::fixef(mix)[1]
             ## get variance components and fix names
             vc <- lme4::VarCorr(mix); #print(vc,comp=c("Variance"))
@@ -352,7 +371,7 @@ mtaLmmFlex <- function(
             }
             ## get predictions and metrics
             pp <- means <- sds <- cvs <- r2s <- list()
-            
+            # save main effects (intercept)
             intercepts0 <- list()
             for(iEffect in names(effs)){ # iEffect = names(effs)[1]  produce intercepts for models of the type (intercept|slope) 
               if( length( grep(":",iEffect) ) > 0 ){
@@ -369,10 +388,10 @@ mtaLmmFlex <- function(
                 intercepts0[[iEffect]] <- provInter
               }
             }; intercepts0[["inter"]] <- data.frame(id="(Intercept)",predictedValue=intercept,id2="L.(Intercept)")
-            
+            # save environment specific BLUPs
             for(iEffect in names(effs)){ # iEffect = names(effs)[1]
               Vg <- vars[which((vars$grp == iEffect) & (is.na(vars$var2) )), "vcov"]
-              provEffects <- as.data.frame(effs[[iEffect]]); 
+              provEffects <- as.data.frame(effsForBLUP[[iEffect]]); 
               ## add the proper intercept to the estimate
               if( traitFamily[iTrait] == "gaussian(link = 'identity')" ){
                 for(iInter in 1:length(intercepts0)){ # iInter=1
@@ -401,7 +420,7 @@ mtaLmmFlex <- function(
               
               provEffects$designation <- rownames(provEffects)
               provEffectsLong <- reshape(provEffects, idvar = "designation", varying = list(1:(ncol(provEffects)-1)),
-                                         v.names = "predictedValue", times=colnames(effs[[iEffect]]), timevar = "environment", direction = "long")
+                                         v.names = "predictedValue", times=colnames(effsForBLUP[[iEffect]]), timevar = "environment", direction = "long")
               # provEffectsLong$predictedValue <- provEffectsLong$predictedValue + intercept
               SEs <- attr(effs[[iEffect]], which="postVar")
               if(is.list(SEs)){
@@ -415,6 +434,27 @@ mtaLmmFlex <- function(
                                     return( do.call(cbind, se) )
                                   })
                 )
+                if(areThereFas){ # rotate SEs and VC
+                  if(iEffect %in% faTerms){ 
+                    colnames(provSe) <- colnames(effs[[iEffect]])
+                    pcCols <- grep("PC[0-9]_",colnames(provSe))
+                    loadings <<- ff$loadingsTraits[[iTrait]][[iEffect]]
+                    seRR <- as.matrix(provSe[,pcCols]) %*% t(as.matrix(loadings))
+                    # replace PC se by rotation
+                    provSe <- provSe[,-c(pcCols)]
+                    if(ncol(provSe)>0){ provSe <- provSe+seRR }else{provSe <- cbind(seRR, provSe)}
+                    # now replace variance components
+                    Gint <- loadings %*% vc[[iEffect]] %*% t(loadings)
+                    dd <- grep(iEffect,names(vc))[-1]
+                    Gspec <- diag( unlist(lapply(vc[dd], function(x){x[[1]]})) )
+                    G <- Gint + Gspec
+                    Vg <- diag(G)
+                    groups <- grep(iEffect,vars$grp)
+                    groupEnvs <- grep("PC[0-9]_",vars$var1)
+                    pcRows <- intersect(groups,groupEnvs)
+                    vars <- vars[-pcRows,]
+                  }
+                }
                 # provSe <- do.call(cbind, lapply(SEs,function(x){x[,,]}))
                 r2 <- provSe
                 for(iCol in 1:ncol(provSe)){r2[,iCol] <- (Vg[iCol] - provSe[,iCol])/Vg[iCol]}
@@ -445,25 +485,25 @@ mtaLmmFlex <- function(
             pp <- rbind(pp, blues[,colnames(pp)])
             pp$trait <- iTrait # add trait
             
-           
+            
             
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "grp"] ,
                                                     parameter=paste0("V.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("REML"),
                                                     value=vars[which( (is.na(vars$var2) )), "vcov"] ,
                                                     stdError=0
                                          ),
-                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "grp"],
                                                     parameter=paste0("mean.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=  if( traitFamily[iTrait] == "gaussian(link = 'identity')"){c(unlist(means),NA )}else{unlist(means)},
                                                     stdError=0
                                          ),
-                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "grp"],
                                                     parameter=paste0("CV.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value= if( traitFamily[iTrait] == "gaussian(link = 'identity')"){c(unlist(cvs),NA )}else{unlist(cvs)},
                                                     stdError=0
                                          ),
-                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "grp"],
                                                     parameter=paste0("r2.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value= if( traitFamily[iTrait] == "gaussian(link = 'identity')"){c(unlist(r2s),NA )}else{unlist(r2s)},
                                                     stdError=0
