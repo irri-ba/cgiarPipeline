@@ -438,13 +438,13 @@ mtaLmmFlex <- function(
                   if(iEffect %in% faTerms){ 
                     colnames(provSe) <- colnames(effs[[iEffect]])
                     pcCols <- grep("PC[0-9]_",colnames(provSe))
-                    loadings <<- ff$loadingsTraits[[iTrait]][[iEffect]]
-                    seRR <- as.matrix(provSe[,pcCols]) %*% t(as.matrix(loadings))
+                    loadingsX <<- ff$loadingsTraits[[iTrait]][[iEffect]]
+                    seRR <- as.matrix(provSe[,pcCols]) %*% t(as.matrix(loadingsX))
                     # replace PC se by rotation
                     provSe <- provSe[,-c(pcCols)]
                     if(ncol(provSe)>0){ provSe <- provSe+seRR }else{provSe <- cbind(seRR, provSe)}
                     # now replace variance components
-                    Gint <- loadings %*% vc[[iEffect]] %*% t(loadings)
+                    Gint <- loadingsX %*% vc[[iEffect]] %*% t(loadingsX)
                     dd <- grep(iEffect,names(vc))[-1]
                     Gspec <- diag( unlist(lapply(vc[dd], function(x){x[[1]]})) )
                     G <- Gint + Gspec
