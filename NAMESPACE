@@ -4,7 +4,8 @@ importFrom("stats", "cov", "dist", "median", "model.matrix", "optimize", "pbeta"
 export(
        traitTransformation,newOutliersFun, modifExpDesign, equalizeTraits,
        staLMM, metLMM, indexDesire, baseIndex, ocs, rggMackay, rggPiepho, pgg,
-       singleCrossMat, nasaPowerExtraction, summaryWeather, mtaLmmFlex
+       singleCrossMat, nasaPowerExtraction, summaryWeather, mtaLmmFlex,
+       numberFounders
        )
 
 
