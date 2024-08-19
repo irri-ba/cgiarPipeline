@@ -11,8 +11,8 @@ Uses a marker matrix to approximate the effective population size (Ne) by discov
 numberFounders(
     object= NULL,
     analysisIdForGenoModifications=NULL,
-    maxNe=100, 
-    maxMarker=1000, 
+    neExplore=NULL,
+    maxMarker=1000,
     nSamples=5,
     verbose=FALSE
 )
@@ -25,14 +25,14 @@ The data object structure produced from bioflow which contains data, metadata, m
 \item{analysisIdForGenoModifications}{
 A numeric id to link to the modifications to be applied to the marker information.
 }
-\item{maxNe}{
-The maximum number of potential founders to try.
+\item{neExplore}{
+A vector of numbers with the effective population sizes to be explored. If NULL, the sequence 10 to 100 in steps of 10 will be used.
 }
 \item{maxMarker}{
-The maximum number of markers to sample. 
+The maximum number of markers to sample for the exercise.
 }
 \item{nSamples}{
-number of individuals to sample for the Ne calculation.
+number of independent runs for each value of maxNe for the Ne calculation.
 }
 \item{verbose}{
 Should the logs or warninig messages of the analysis be printed?
@@ -69,8 +69,8 @@ result$status
 result2 <- numberFounders(
   object= result,
   analysisIdForGenoModifications=result$status$analysisId[8],
-  maxNe=100, 
-  maxMarker=1000, 
+  maxNe=100,
+  maxMarker=1000,
   nSamples=10,
   verbose=FALSE
 )

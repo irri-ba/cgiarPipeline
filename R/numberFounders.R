@@ -1,16 +1,47 @@
 numberFounders <- function(
     object= NULL,
     analysisIdForGenoModifications=NULL,
-    maxNe=100, 
+    neExplore=NULL, 
     maxMarker=1000, 
     nSamples=5,
     verbose=FALSE
 ){
+  
+  neMarker <- function(M, neExplore=NULL, maxMarker=1000, nSamples=5){
+    # maxMarker argument: only used a limited number of markers to avoid this to be too time consuming
+    v <- sample(1:ncol(M), min(c(maxMarker, ncol(M))))
+    M <- M[,v]
+    # calculate the total number of alleles in the population
+    nAllelesPop <- apply(M,2,function(x){ifelse(length(table(x)) > 1, 2, 1)})
+    nAllelesPopTotal <- sum(nAllelesPop)
+    # maxNe argument: define the range to test
+    if(is.null(neExplore)){neExplore <- seq(10,100,10)}
+    # do the sampling algorithm
+    counter <- 1
+    allelesCovered <- allelesCoveredSe <- vector(mode="numeric", length = length(neExplore) )
+    for(i in neExplore){ # for a possible Ne
+      print(paste("Exploring allele coverage (%) at Ne:",i))
+      allelesCoveredSample <- vector(mode="numeric", length = nSamples)
+      # nSamples argument: take a couple of samples 
+      for(j in 1:nSamples){
+        ii <- sample(1:nrow(M),i) # sample i individuals
+        nAllelesPopI <- apply(M[ii,],2,function(x){ifelse(length(table(x)) > 1, 2, 1)}) # how many alleles we collect in the sample
+        allelesCoveredSample[j] <- sum(nAllelesPopI) # sum them up
+      }
+      allelesCovered[counter] <- mean(allelesCoveredSample)/nAllelesPopTotal # mean across samples
+      allelesCoveredSe[counter] <- ( sd(allelesCoveredSample/nAllelesPopTotal) ) # SE across samples 
+      counter <- counter+1
+    }
+    # save results
+    result <- data.frame(allelesCovered=allelesCovered, allelesCoveredSe=allelesCoveredSe, Ne=neExplore)
+    return(result)
+  }
   ## FUNCTION TO CALCULATE EFFECTIVE POPULATION SIZE USING MARKER INFORMATION
   neAnalysisId <- as.numeric(Sys.time())
   ############################
   # loading the dataset
   if (is.null(object)) stop("No input marker data file specified.")
+  if(is.null(neExplore)){neExplore <- seq(10,100,10)}
   ############################
   # calculate the relationship matrix
   M <- object$data$geno 
@@ -22,7 +53,7 @@ numberFounders <- function(
   }else{ # there's no match of the modification file
     if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
   }
-  ne <- sommer::neMarker(Markers, maxNe=maxNe, maxMarker=maxMarker, nSamples=nSamples)
+  ne <- neMarker(Markers, neExplore = neExplore, maxMarker=maxMarker, nSamples=nSamples)
   ## add metrics
   object$metrics <- rbind(object$metrics,
                                data.frame(module="neMarker",analysisId=neAnalysisId, trait= "none", environment="none",
