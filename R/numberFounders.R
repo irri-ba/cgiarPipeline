@@ -64,8 +64,8 @@ numberFounders <- function(
   )
   ## add modeling
   currentModeling <- data.frame(module="neMarker", analysisId=neAnalysisId,trait="Ne", environment="across",
-                                parameter=c("maxNe","maxMarker","nSamples","analysisIdForGenoModifications"), 
-                                value=c(maxNe,maxMarker,nSamples,analysisIdForGenoModifications))
+                                parameter=c("minNe","maxNe","maxMarker","nSamples","analysisIdForGenoModifications"), 
+                                value=c(min(neExplore),max(neExplore),maxMarker,nSamples,analysisIdForGenoModifications))
   object$modeling <- rbind(object$modeling,currentModeling[,colnames(object$modeling)] )
   ## add status
   object$status <- rbind( object$status, data.frame(module="neMarker", analysisId=neAnalysisId))
