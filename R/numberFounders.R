@@ -7,7 +7,7 @@ numberFounders <- function(
     verbose=FALSE
 ){
   
-  neMarker <- function(M, neExplore=NULL, maxMarker=1000, nSamples=5){
+  neMarker <- function(M, neExplore=NULL, maxMarker=1000, nSamples=5, verbose=FALSE){
     # maxMarker argument: only used a limited number of markers to avoid this to be too time consuming
     v <- sample(1:ncol(M), min(c(maxMarker, ncol(M))))
     M <- M[,v]
@@ -20,7 +20,7 @@ numberFounders <- function(
     counter <- 1
     allelesCovered <- allelesCoveredSe <- vector(mode="numeric", length = length(neExplore) )
     for(i in neExplore){ # for a possible Ne
-      print(paste("Exploring allele coverage (%) at Ne:",i))
+      if(verbose){print(paste("Exploring allele coverage (%) at Ne:",i))}
       allelesCoveredSample <- vector(mode="numeric", length = nSamples)
       # nSamples argument: take a couple of samples 
       for(j in 1:nSamples){
@@ -53,7 +53,7 @@ numberFounders <- function(
   }else{ # there's no match of the modification file
     if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
   }
-  ne <- neMarker(Markers, neExplore = neExplore, maxMarker=maxMarker, nSamples=nSamples)
+  ne <- neMarker(Markers, neExplore = neExplore, maxMarker=maxMarker, nSamples=nSamples, verbose=verbose)
   ## add metrics
   object$metrics <- rbind(object$metrics,
                                data.frame(module="neMarker",analysisId=neAnalysisId, trait= "none", environment="none",
