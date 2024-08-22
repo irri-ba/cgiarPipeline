@@ -129,7 +129,15 @@ staLMM <- function(
   #####################################
   # single trial analysis
   fixedFormulaForFixedModel <- randomFormulaForFixedModel <- NULL
-  fields <- as.character(na.omit(unique(mydata$environment)))
+  # fields <- as.character(na.omit(unique(mydata$environment)))
+  
+  designationColumns <- paramsPed[which(paramsPed$parameter %in%  genoUnit),"value"]
+  fieldsL <- list()
+  for(igenoUnit in genoUnit){
+    fieldsL[[igenoUnit]] <- names(which(apply(table(mydata[,"environment"],mydata[,designationColumns]),1,sum)>3))
+  }
+  fields <- Reduce(intersect,fields)
+  
   
   if(length(fields) == nrow(mydata)){
     stop("The number of environment levels is equal to the number of records/rows in the dataset.
@@ -141,6 +149,7 @@ staLMM <- function(
   for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     mydata[,paste(iTrait,"residual",sep="-")] <- NA
+    
     for(iField in fields){ # iField = fields[1]# "ARH1_2016"
       if(verbose){cat(paste("Analyzing field", iField,"\n"))}
       # subset data
