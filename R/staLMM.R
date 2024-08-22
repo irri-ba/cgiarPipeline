@@ -136,7 +136,7 @@ staLMM <- function(
   for(igenoUnit in genoUnit){
     fieldsL[[igenoUnit]] <- names(which(apply(table(mydata[,"environment"],mydata[,designationColumns]),1,sum)>3))
   }
-  fields <- Reduce(intersect,fields)
+  fields <- Reduce(intersect,fieldsL)
   
   
   if(length(fields) == nrow(mydata)){
