@@ -25,6 +25,7 @@ metLMM <- function(
   if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){
     stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)
   }
+  if(!is.null(interactionsWithGeno)){interactionsWithGeno <- gsub(" ","",gsub("[[:punct:]]", "", interactionsWithGeno))}
   # if user will use markers read them and apply the modifications in the table
   if(modelType %in% c("gblup","ssgblup","rrblup") & !is.null(phenoDTfile$data$geno)){
     Markers <- phenoDTfile$data$geno
@@ -133,6 +134,7 @@ metLMM <- function(
     failedMarkerModel=FALSE
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
+    mydataSub$trait <- gsub(" ","",gsub("[[:punct:]]", "", mydataSub$trait))
     # 
     if(!is.null(envsToInclude)){
       goodFieldsUser = rownames(envsToInclude)[which(envsToInclude[,iTrait] > 0)]
@@ -170,11 +172,11 @@ metLMM <- function(
       mydataSub <- mydataSub[which(mydataSub$designation != ""),] # remove blank designations
       # update the weather metadata
       weather <- cgiarPipeline::summaryWeather(object=phenoDTfile)
-      
+      weather$trait <- gsub(" ","",gsub("[[:punct:]]", "", weather$trait))
       ## add metadata from environment(e.g., weather) as new columns of the phenotype dataset in case the user wants to model it
       if(nrow(weather) > 0){
         
-        weather$traitParameter <- paste(weather$trait, weather$parameter, sep="_")
+        weather$traitParameter <- paste(weather$trait, weather$parameter, sep="")
         metas <- reshape(weather[,-which(colnames(weather)%in%c("trait","parameter"))], direction = "wide", idvar = "environment",
                         timevar = c("traitParameter"), v.names = "value", sep= "_")
         colnames(metas) <- gsub("value_","",colnames(metas))
