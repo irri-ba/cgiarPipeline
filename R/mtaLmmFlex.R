@@ -141,13 +141,14 @@ mtaLmmFlex <- function(
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
     mydataSub <- droplevels(mydataSub[which(!is.na(mydataSub$predictedValue)),])
+    mydataSub$trait <- gsub(" ","",gsub("[[:punct:]]", "", mydataSub$trait))
     # 
     if(!is.null(envsToInclude)){
       goodFieldsUser = rownames(envsToInclude)[which(envsToInclude[,iTrait] > 0)]
     }else{goodFieldsUser <- na.omit(unique(mydataSub[,"environment"]))}
     # remove bad environment based on h2 and r2
     pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2")),]
-    goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > heritLB[counter2]) & (pipeline_metricsSub$value < heritUB[counter2])),"environment"])
+    goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value >= heritLB[counter2]) & (pipeline_metricsSub$value <= heritUB[counter2])),"environment"])
     goodFields <- intersect(goodFields, goodFieldsUser)
     mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
     # remove bad environment based on environment means
