@@ -12,8 +12,8 @@ pgg(
     phenoDTfile= NULL,
     analysisId=NULL,
     trait=NULL, # per trait
-    environment=NULL,
-    proportion=10,
+    by=NULL,
+    percentage=10,
     verbose=TRUE
 )
 }
@@ -28,11 +28,11 @@ A numeric id to link to the predictions to be used for the analysis.
 \item{trait}{
 A character vector with the traits that should be analyzed.
 }
-\item{environment}{
-The environments to use in the analyses. 
+\item{by}{
+The column by which partitions of the data should be built to extract the metrics from breeders' equation. 
 }
-\item{proportion}{
-Proportion of selected individuals to assume.
+\item{percentage}{
+Percentage of selected individuals to assume.
 }
 \item{verbose}{
 Should the logs or warninig messages of the analysis be printed?
@@ -70,8 +70,8 @@ final <- pgg(
     phenoDTfile= result,
     analysisId=result$status$analysisId[3],
     trait="Plant_Height_cm", # per trait
-    environment=NULL,
-    proportion=10,
+    by=NULL, # if NULL 'environment' will be assumed
+    percentage=10,
     verbose=TRUE
 )
 
