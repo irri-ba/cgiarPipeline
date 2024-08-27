@@ -86,7 +86,6 @@ final <- rggMackay(
     analysisId=result$status$analysisId[3],
     trait="Yield_Mg_ha", # per trait
     deregressWeight=1,
-    deregress=FALSE,
     partition=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,

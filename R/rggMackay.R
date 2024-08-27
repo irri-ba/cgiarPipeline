@@ -119,7 +119,7 @@ rggMackay <- function(
         })
 
         if(partition){
-          p1 <- p2 <- p3 <- p4 <- p5 <- p6 <- p7 <- p8 <- numeric();cc <- 1
+          p1 <- p2 <- p2b <- p3 <- p3b <- p4 <- p5 <- p6 <- p7 <- p8 <- numeric();cc <- 1
           for(u in 1:(length(hh))){
             for(w in 1:u){
               if(u != w){
@@ -127,9 +127,12 @@ rggMackay <- function(
                 mix <- lm(as.formula(fix), data=mydataSub2)
                 sm <- summary(mix)
                 p1[cc] <- sm$coefficients[2,1]*ifelse(deregress,deregressWeight,1)
-                baseline <- mix$coefficients[1] + ( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1))*min(as.numeric(mydataSub[which(mydataSub$trait == iTrait),fixedTerm]) ))
-                p2[cc] <- round(( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1)) /baseline) * 100,3)
-                p3[cc] <- round((sm$coefficients[2,2]/baseline) * 100,3)
+                baselineFirstYear <- mix$coefficients[1] + ( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1))*min(as.numeric(mydataSub[which(mydataSub$trait == iTrait),fixedTerm]), na.rm=TRUE ))
+                baselineAverageYear <- mix$coefficients[1] + ( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1))*mean(as.numeric(mydataSub[which(mydataSub$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
+                p2[cc] <- round(( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1)) /baselineFirstYear) * 100,3)
+                p2b[cc] <- round(( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1)) /baselineAverageYear) * 100,3)
+                p3[cc] <- round((sm$coefficients[2,2]/baselineFirstYear) * 100,3)
+                p3b[cc] <- round((sm$coefficients[2,2]/baselineAverageYear) * 100,3)
                 p4[cc] <- sm$coefficients[1,1]
                 p5[cc] <- sm$coefficients[2,2]
                 p6[cc] <- sm$coefficients[1,2]
@@ -139,7 +142,8 @@ rggMackay <- function(
               }
             }
           }
-          gg <- median(p1, na.rm=TRUE); ggp <- median(p2, na.rm=TRUE); segp <- median(p3, na.rm=TRUE)
+          gg <- median(p1, na.rm=TRUE); ggPercentage <- median(p2, na.rm=TRUE); ggPercentageAverageYear <- median(p2b, na.rm=TRUE); 
+          seGgPercentage <- median(p3, na.rm=TRUE); seGgPercentageAverageYear <- median(p3b, na.rm=TRUE)
           inter <- median(p4, na.rm=TRUE); seb1 <- median(p5, na.rm=TRUE); seb0<- median(p6, na.rm=TRUE)
           r2 <- median(p7, na.rm=TRUE); pv <- median(p8, na.rm=TRUE)
         }else{
@@ -147,25 +151,28 @@ rggMackay <- function(
           mix <- lm(as.formula(fix), data=mydataSub)
           sm <- summary(mix)
           gg <- sm$coefficients[2,1]*ifelse(deregress,deregressWeight,1)
-          baseline <- mix$coefficients[1] + ( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1))*min(as.numeric(mydataSub[which(mydataSub$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
-          ggp <- round(( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1)) /baseline) * 100,3)
-          segp <- round((sm$coefficients[2,2]/baseline) * 100,3)
+          baselineFirstYear <- mix$coefficients[1] + ( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1))*min(as.numeric(mydataSub[which(mydataSub$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
+          baselineAverageYear <- mix$coefficients[1] + ( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1))*mean(as.numeric(mydataSub[which(mydataSub$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
+          ggPercentage <- round(( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1)) /baselineFirstYear) * 100,3)
+          ggPercentageAverageYear <- round(( (mix$coefficients[2]*ifelse(deregress,deregressWeight,1)) /baselineAverageYear) * 100,3)
+          seGgPercentage <- round((sm$coefficients[2,2]/baselineFirstYear) * 100,3)
+          seGgPercentageAverageYear <- round((sm$coefficients[2,2]/baselineAverageYear) * 100,3)
           inter <- sm$coefficients[1,1]
           seb1 <- sm$coefficients[2,2]
           seb0 <- sm$coefficients[1,2]
           r2 <- sm$r.squared
           pv <- 1 - pf(sm$fstatistic[1], df1=sm$fstatistic[2], df2=sm$fstatistic[3])
         }
-        gg.y1<- sort(unique(mydataSub[,fixedTerm]), decreasing = FALSE)[1]
-        gg.yn <- sort(unique(mydataSub[,fixedTerm]), decreasing = TRUE)[1]
-        ntrial <- phenoDTfile$metrics
+        gg.y1<- sort(unique(mydataSub[,fixedTerm]), decreasing = FALSE)[1] # first year
+        gg.yn <- sort(unique(mydataSub[,fixedTerm]), decreasing = TRUE)[1] # last year
+        ntrial <- phenoDTfile$metrics # number of trials
         ntrial <- ntrial[which(ntrial$trait ==iTrait),]
         ntrial <- length(unique(ntrial$environment))
         phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                      data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment="across",
-                                                parameter=c("ggSlope","ggInter", "gg%","r2","pVal","nTrial","initialYear","lastYear"), method=ifelse(deregress,"blup+dereg","mackay"),
-                                                value=c(gg,inter, ggp, r2, pv, ntrial,gg.y1,gg.yn  ),
-                                                stdError=c(seb1,seb0,segp,0,0,0,0,0)
+                                                parameter=c("ggSlope","ggInter", "gg%(first.year)","gg%(average.year)","r2","pVal","nTrial","initialYear","lastYear"), method=ifelse(deregress,"blup+dereg","mackay"),
+                                                value=c(gg,inter, ggPercentage,ggPercentageAverageYear, r2, pv, ntrial,gg.y1,gg.yn  ),
+                                                stdError=c(seb1,seb0,seGgPercentage,seGgPercentageAverageYear,0,0,0,0,0)
                                      )
         )
         currentModeling <- data.frame(module="rgg", analysisId=rggAnalysisId,trait=iTrait, environment="across",
