@@ -151,8 +151,11 @@ rggPiepho <- function(
           seb1 <- mixCoeff$yearOfOrigin[1,"se"]
           seb0 <- mixCoeff$`(Intercept)`[1,"se"]
           baseline <- b0 + ( b1*min(as.numeric(mydataSub2[which(mydataSub2$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
+          baselineAverageYear <- b0 + ( b1*min(as.numeric(mydataSub2[which(mydataSub2$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
           b1Perc <- round(( b1 /baseline) * 100,3)
+          b1PercAverageYear <- round(( b1 /baselineAverageYear) * 100,3)
           b1PercSe <- round((seb1/baseline) * 100,3)
+          b1PercSeAverageYear <- round((seb1/baselineAverageYear) * 100,3)
           if(length(which(metaPheno$parameter == "year")) > 0){
             ngt <- baseline + mixCoeff$year$value
             ngtSe <- mixCoeff$year$se
@@ -168,8 +171,8 @@ rggPiepho <- function(
           ntrial <- phenoDTfile$metrics
           ntrial <- ntrial[which(ntrial$trait ==iTrait),]
           ntrial <- length(unique(ntrial$environment))
-          val[[iBoot]] <- c(b1,b0, b1Perc, r2, pv, ntrial,gg.y1,gg.yn, ngt  )
-          stdError[[iBoot]] <- c(seb1,seb0,b1PercSe,0,0,0,0,0, ngtSe)
+          val[[iBoot]] <- c(b1,b0, b1Perc, b1PercAverageYear, r2, pv, ntrial,gg.y1,gg.yn, ngt  )
+          stdError[[iBoot]] <- c(seb1,seb0,b1PercSe,b1PercSeAverageYear,0,0,0,0,0, ngtSe)
           counter=counter+1
         }
       }
@@ -183,8 +186,8 @@ rggPiepho <- function(
     val <- apply(do.call(rbind, val),2, function(x){median(x, na.rm=TRUE)})
     stdError <- apply(do.call(rbind, stdError),2, function(x){median(x, na.rm=TRUE)})
     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                 data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment=c(rep("across",8), mixCoeff$year$coef),
-                                            parameter=c("ggSlope","ggInter", "gg%","r2","pVal","nTrial","initialYear","lastYear",rep("nonGeneticTrend",length(mixCoeff$year$coef) )), 
+                                 data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment=c(rep("across",9), mixCoeff$year$coef),
+                                            parameter=c("ggSlope","ggInter", "gg%(first.year)","gg%(average.year)","r2","pVal","nTrial","initialYear","lastYear",rep("nonGeneticTrend",length(mixCoeff$year$coef) )), 
                                             method=ifelse(deregress,"piephoDeregress","piepho"),
                                             value=val, stdError=stdError
                                  )
