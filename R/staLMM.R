@@ -134,7 +134,7 @@ staLMM <- function(
   designationColumns <- paramsPed[which(paramsPed$parameter %in%  genoUnit),"value"]
   fieldsL <- list()
   for(igenoUnit in genoUnit){
-    fieldsL[[igenoUnit]] <- names(which(apply(table(mydata[,"environment"],mydata[,designationColumns]),1,sum)>3))
+    fieldsL[[igenoUnit]] <- names(which(apply(table(mydata[,"environment"],mydata[,igenoUnit]),1,sum)>3))
   }
   fields <- Reduce(intersect,fieldsL)
   
