@@ -57,12 +57,18 @@ None
 ####=========================================####
 data(DT_example)
 
-M <- result$data$geno
-Mf <- M[1,,drop=FALSE]; Mm <- M[2,,drop=FALSE]; Mp <- M[3,,drop=FALSE];
-Mf <- M[sample(1:nrow(M)),]; Mm <- M[sample(1:nrow(M)),]; Mp <- M[sample(1:nrow(M)),]
-ss <- individualVerification(Mf,Mm,Mp, Mexp=NULL, ploidy=2)
-head(ss$metrics)
-Matrix::image(ss$matchMat[1:40,1:40])
+result$data$pedigree$Hybrid_Parent1 <- sample(result$data$pedigree$Hybrid)
+result$data$pedigree$Hybrid_Parent2 <- sample(result$data$pedigree$Hybrid)
+
+res <- individualVerification( 
+  object= result,
+  analysisIdForGenoModifications= result$status$analysisId[8],
+  markersToBeUsed=NULL,
+  colsForExpecGeno=NULL, ploidy=2
+)
+
+tail(res$modeling)
+
 
 }
 
