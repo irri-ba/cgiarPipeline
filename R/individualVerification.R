@@ -11,12 +11,12 @@ individualVerification <- function(
   # loading the dataset
   if (is.null(object)) stop("No input file specified.")
   if (is.null(analysisIdForGenoModifications)) stop("No geno clean file specified.")
-  if (is.null(markersToBeUsed)) stop("No marker names specified.")
-  if (is.null(colsForExpecGeno)) stop("No column names in pedigree to build the expected genotype specified.")
+  if (is.null(colsForExpecGeno)){colsForExpecGeno <- "designation"}
   
   # get markers
   Markers <- object$data$geno
   if(is.null(Markers)){stop("This function requires your object to have marker information.", call. = FALSE)}
+  if (is.null(markersToBeUsed)){markersToBeUsed <- 1:ncol(Markers)}
   Markers <- Markers[,markersToBeUsed]
   ## extract marker matrices and reference alleles
   ped <- object$data$pedigree
@@ -65,7 +65,7 @@ individualVerification <- function(
   Mexpec <- Mexpec/length(colsForExpecGeno)
   ## calculate metrics
   
-  res <- crossVerification(Mf=Mfem,Mm=Mmal,Mp=Mpro, 
+  res <- cgiarBase::crossVerification(Mf=Mfem,Mm=Mmal,Mp=Mpro, 
                                 Mexp=Mexpec,
                                 ploidy=ploidy)
   ###############
