@@ -3,7 +3,8 @@ individualVerification <- function(
   object= NULL,
   analysisIdForGenoModifications= NULL,
   markersToBeUsed=NULL,
-  colsForExpecGeno=NULL, ploidy=2
+  colsForExpecGeno=NULL, ploidy=2,
+  onlyMats=FALSE
 ){
   
   analysisId <- as.numeric(Sys.time())
@@ -31,6 +32,7 @@ individualVerification <- function(
   ped <- object$data$pedigree
   metaPed <- object$metadata$pedigree
   colnames(ped) <- cgiarBase::replaceValues(colnames(ped), Search = metaPed$value, Replace = metaPed$parameter )
+  colsForExpecGeno <- cgiarBase::replaceValues(colsForExpecGeno, Search = metaPed$value, Replace = metaPed$parameter )
   cross <- unique(ped[,c("mother","father","designation")]); colnames(cross) <- c("Var1","Var2","hybrid")
   cross <- cross[which(!duplicated(cross$hybrid)),]
   
@@ -77,6 +79,9 @@ individualVerification <- function(
   res <- cgiarBase::crossVerification(Mf=Mfem,Mm=Mmal,Mp=Mpro, 
                                 Mexp=Mexpec,
                                 ploidy=ploidy)
+  if(onlyMats){
+    return(res)
+  }else{
   ###############
   # other tables
   object$status <- rbind( object$status, data.frame(module="gVerif", analysisId=analysisId))
@@ -109,6 +114,7 @@ individualVerification <- function(
   }
   
   return(object)
+  }
 }
 
 

@@ -12,7 +12,8 @@ individualVerification(
   object= NULL,
   analysisIdForGenoModifications= NULL,
   markersToBeUsed=NULL,
-  colsForExpecGeno=NULL, ploidy=2
+  colsForExpecGeno=NULL, ploidy=2,
+  onlyMats = FALSE
 )
 }
 
@@ -31,6 +32,9 @@ Columns that define the average of genotype markers to be used as expected genot
 }
 \item{ploidy}{
 A numeric value indicating the ploidy of the individuals.
+}
+\item{onlyMats}{
+A logical value indicating if we should return the bioflow object or the result matrices from the computation.
 }
 
 }
@@ -64,7 +68,8 @@ res <- individualVerification(
   object= result,
   analysisIdForGenoModifications= result$status$analysisId[8],
   markersToBeUsed=NULL,
-  colsForExpecGeno=NULL, ploidy=2
+  colsForExpecGeno=NULL, ploidy=2,
+  onlyMats = FALSE
 )
 
 tail(res$modeling)
