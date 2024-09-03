@@ -29,7 +29,7 @@ markerAssistedSelection <- function(
     Markers <- apply(Markers,2,sommer::imputev)
     rownames(Markers) <- mynames
   }
-  if (is.null(markersToBeUsed)){markersToBeUsed <- 1:ncol(Markers)}
+  if (is.null(markersToBeUsed)){markersToBeUsed <- 1:ncol(Markers)}else{markersToBeUsed <- intersect(colnames(Markers),markersToBeUsed)}
   Markers <- Markers[,markersToBeUsed]
   ## extract marker matrices and reference alleles
   names(positiveAlleles) <- markersToBeUsed
