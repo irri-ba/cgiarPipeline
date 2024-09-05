@@ -48,19 +48,19 @@ markerAssistedSelection <- function(
       n <- sum(ttb)
       p[k] <- ( ifelse(positiveAllelesN[k]==0, ttb[1],ttb[length(ttb)]) + (ttb[2:(length(ttb)-1)] / factorial(2:(length(ttb)-1)) ) ) / n
     }
-    desire <- 1 - p # distance to fixation
-  }else{
-    if(var(desire)==0){
-      p <- vector(mode="numeric",length = length(positiveAllelesN))
-      for(k in 1:ncol(Markers)){
-        ttb <- table(0:ploidy)-1 # table of zeros for dosages
-        tto <- table(Markers[,k])
-        ttb[names(tto)] <- ttb[names(tto)] + tto 
-        n <- sum(ttb)
-        p[k] <- ( ifelse(positiveAllelesN[k]==0, ttb[1],ttb[length(ttb)]) + (ttb[2:(length(ttb)-1)] / factorial(2:(length(ttb)-1)) ) ) / n
-      }
-      desire <- 1 - p # distance to fixation
+    desire <- (1 - p) # distance to fixation
+  }else{ # we apply both, frequencies and weights from user
+    # if(var(desire)==0){
+    p <- vector(mode="numeric",length = length(positiveAllelesN))
+    for(k in 1:ncol(Markers)){
+      ttb <- table(0:ploidy)-1 # table of zeros for dosages
+      tto <- table(Markers[,k])
+      ttb[names(tto)] <- ttb[names(tto)] + tto 
+      n <- sum(ttb)
+      p[k] <- ( ifelse(positiveAllelesN[k]==0, ttb[1],ttb[length(ttb)]) + (ttb[2:(length(ttb)-1)] / factorial(2:(length(ttb)-1)) ) ) / n
     }
+    desire <- (1 - p)*desire # distance to fixation
+    # }
   }
   
   G <- cov(Markers)
