@@ -149,13 +149,13 @@ mtaLmmFlex <- function(
     # remove bad environment based on h2 and r2
     pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2")),]
     goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value >= heritLB[counter2]) & (pipeline_metricsSub$value <= heritUB[counter2])),"environment"])
-    goodFields <- intersect(goodFields, goodFieldsUser)
+    goodFields <- intersect(gsub("[[:punct:]]", "", goodFields ), goodFieldsUser)
     mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
     # remove bad environment based on environment means
     pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("mean")),]
     if(nrow(pipeline_metricsSub) > 0){ # second reduction for good environments or a given threshold
       goodFieldsMean <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > meanLB[counter2]) & (pipeline_metricsSub$value < meanUB[counter2])),"environment"])
-      goodFields <- intersect(goodFields, goodFieldsMean)
+      goodFields <- intersect(goodFields, gsub("[[:punct:]]", "", goodFieldsMean ))
       mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
     }
     if(verbose){print(paste("Fields included:",paste(goodFields,collapse = ",")))}
