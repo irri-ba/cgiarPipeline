@@ -123,7 +123,12 @@ summaryWeather <- function(object){
     data2 <- object$data$pheno
     metadata2 <- object$metadata$pheno
     if(!is.null(metadata2)){
-      traits2 <- metadata2[which(metadata2$parameter == "trait"),"value"]
+      #check if each column has all missing values
+      all_miss <- apply(data2, 2, function(x) all(is.na(x)))
+      #display columns with all missing values
+      all_miss_var <- names(all_miss[all_miss>0])  
+      
+      traits2 <- setdiff(metadata2[which(metadata2$parameter == "trait"),"value"],all_miss_var)
       environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
       provList2 <- list()
       for(iTrait2 in traits2){ # iTrait2 = traits2[1]
@@ -170,7 +175,12 @@ summaryWeather <- function(object){
     data2 <- object$data$pheno
     metadata2 <- object$metadata$pheno
     if(!is.null(metadata2)){
-      traits2 <- metadata2[which(metadata2$parameter == "trait"),"value"]
+      #check if each column has all missing values
+      all_miss <- apply(data2, 2, function(x) all(is.na(x)))
+      #display columns with all missing values
+      all_miss_var <- names(all_miss[all_miss>0])  
+      
+      traits2 <- setdiff(metadata2[which(metadata2$parameter == "trait"),"value"],all_miss_var)
       environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
       provList2 <- list()
       for(iTrait2 in traits2){ # iTrait2 = traits2[1]
