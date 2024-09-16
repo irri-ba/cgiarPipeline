@@ -112,6 +112,7 @@ mtaLmmFlex <- function(
   if(length(trait)==0){stop("None of the traits specified are available. Please double check", call. = FALSE)}
   traitToRemove <- character()
   if(!is.null(envsToInclude)){
+    rownames(envsToInclude) <- gsub("[[:punct:]]", "", rownames(envsToInclude) )
     for(k in 1:length(trait)){
       if( length(which(envsToInclude[,trait[k]] > 0)) == 0 ){
         if(verbose){ cat(paste0("'", trait[k], "' has not envs selected. It will be removed from trait list \n"))}
