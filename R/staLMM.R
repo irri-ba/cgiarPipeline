@@ -252,7 +252,7 @@ staLMM <- function(
                                     random = as.formula(randomFormulaForRanModel),
                                     spline = newSpline, #trace = TRUE,
                                     family = eval(parse(text = traitFamily[iTrait])),
-                                    data = mydataSub, maxit = maxit),
+                                    data = droplevels(mydataSub[which(!is.na(mydataSub[,iGenoUnit])),]), maxit = maxit),
                 silent = TRUE
               );  # mixRandom$VarDf
               # if random model run only keep variance components that were greater than zero and fit again
@@ -280,7 +280,7 @@ staLMM <- function(
                                       random = randomFormulaForFixedModel,
                                       spline = newSpline, #trace = TRUE,
                                       family = eval(parse(text = traitFamily[iTrait])),
-                                      data = mydataSub, maxit = maxit),
+                                      data = droplevels(mydataSub[which(!is.na(mydataSub[,iGenoUnit])),]), maxit = maxit),
                   silent = TRUE
                 ) # mixFixed$VarDf
                 
@@ -290,7 +290,7 @@ staLMM <- function(
                   mixFixed <- try( # urgency model, genotypes as fixed but no spatial
                     LMMsolver::LMMsolve(fixed =as.formula(fixedFormulaForFixedModel),
                                         family = eval(parse(text = traitFamily[iTrait])),
-                                        data = mydataSub, maxit = maxit),
+                                        data = droplevels(mydataSub[which(!is.na(mydataSub[,iGenoUnit])),]), maxit = maxit),
                     silent = TRUE
                   )
                   if( inherits(mixFixed,"try-error") ){
