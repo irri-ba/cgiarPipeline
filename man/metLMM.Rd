@@ -15,7 +15,7 @@ metLMM(
     interactionsWithGeno=NULL, envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
     heritLB= 0.15,  heritUB= 0.95, modelType="blup",
-    nMarkersRRBLUP=1000, deregress=FALSE,  nPC=0,
+    nMarkersRRBLUP=1000, nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
     minimumNumberEnvsFW=6, verbose=TRUE
 )
@@ -66,9 +66,6 @@ The geentic evaluation model to used; blup, gblup, rrblup, pblup, ssblup.
 }
 \item{nMarkersRRBLUP}{
 Maximum number of markers that should be used if an rrBLUP genetic evaluation method is selected. Under high density marker SNP panels the user may want to reduce the complexity of the marker-based model, the default is 1000. The markers will be randomly sampled without replacement.
-}
-\item{deregress}{
-A TRUE/FALSE value to decide is the STA predictions should be deregressed. Only to be used if you fitted BLUPs in the STA step.
 }
 \item{nPC}{
 Number of principal components for the big MET. If the value is equal to 0 the classical rrBLUP model is used. Otherwise a principal component model is run according to Odegard et al. (2019).
@@ -129,8 +126,7 @@ final <- metLMM(
     heritLB= 0.15,  heritUB= 0.95,
     meanLB=0, meanUB=Inf,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
-    nMarkersRRBLUP=1000,
-    deregress=FALSE,  nPC=0,
+    nMarkersRRBLUP=1000,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
     minimumNumberEnvsFW=6,
     verbose=TRUE

@@ -8,8 +8,7 @@ metLMM <- function(
     heritLB= 0.15,  heritUB= 0.95,
     meanLB=0, meanUB=Inf,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
-    nMarkersRRBLUP=1000,
-    deregress=FALSE,  nPC=0,
+    nMarkersRRBLUP=1000, nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
     minimumNumberEnvsFW=6,
     verbose=TRUE
@@ -200,7 +199,7 @@ metLMM <- function(
           mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE) 
         }
       }
-      ## define the interactions to be used
+      ## define the interactions to be used and remove the ones that don't make sense
       if(!is.null(interactionsWithGeno)){
         interactionsWithGenoTrait <- interactionsWithGeno
         interactionsWithGenoToRemove <- character()
@@ -225,7 +224,9 @@ metLMM <- function(
         if( var(mydataSub[,"predictedValue"], na.rm = TRUE) > 0 ){
           Ve <- var(mydataSub[,"predictedValue"], na.rm = TRUE)
           # make sure the terms to be fitted have more than one level
-          if(deregress){
+          
+          effectTypeTrait <- result$modeling[which(result$modeling$analysisId == analysisId & result$modeling$trait == iTrait & result$modeling$parameter == "designationEffectType"),"value"]
+          if(median(effectTypeTrait)[1] == "BLUP"){ # if STA was BLUPs deregress
             mydataSub$predictedValue <- mydataSub$predictedValue/mydataSub$reliability
           }
           if(!is.null(randomTerm)){
@@ -263,7 +264,7 @@ metLMM <- function(
                 mydataSub <- cbind(mydataSub, apply(reduced$Z,2,function(z){z*mydataSub[,iInteraction]}) ) # reduced$Z*mydataSub[,iInteraction])
                 rTermsTrait <- c(rTermsTrait,paste0("grp(QTL",iInteraction,")"))
               }
-            }else{
+            }else{ # BLUP or GBLUP or PBLUP
               interacs <- expand.grid("designation",interactionsWithGenoTrait)
               interacs<- as.data.frame(interacs[which(as.character(interacs[,1]) != as.character(interacs[,2])),])
               interacsUnlist <- apply(interacs,1,function(x){paste(x,collapse = ":")})
@@ -390,12 +391,16 @@ metLMM <- function(
                 levelsInAinv <- colnames(Ainv)
                 Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
                 Ainv <<- Ainv
-                myGinverse <- list(designation=Ainv)
+                myGinverse <- rep(list(Ainv), length(interacsUnlist)+1)
+                names(myGinverse) <- c("designation",interacsUnlist)
+                # myGinverse <- list(designation=Ainv)
               }else{
                 levelsInAinv <- colnames(Ainv)
                 Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
                 Ainv <<- Ainv
-                myGinverse <- list(designation=Ainv)
+                myGinverse <- rep(list(Ainv), length(interacsUnlist)+1)
+                names(myGinverse) <- c("designation",interacsUnlist)
+                # myGinverse <- list(designation=Ainv)
               }
               
             }else{ # blue model
@@ -643,11 +648,11 @@ metLMM <- function(
                       Vg <- ss[iGenoUnit,2];
                       Ve <- mean(stdError^2) # Ve - Vg
                       if(iGenoUnit %in% fixedTermTrait){pp$reliability <- 1e-6}else{pp2$reliability <- genEva[[iGenoUnit]]$R2}
-                      pp2$trait <- paste(iTrait,iInteractionTrait,sep="-")
+                      pp2$trait <- paste(iTrait,iInteractionTrait,sep=":")
                       cv <- (sd(pp2$predictedValue,na.rm=TRUE)/mean(pp2$predictedValue,na.rm=TRUE))*100
                       ## save metrics
                       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                                   data.frame(module="mta",analysisId=mtaAnalysisId, trait=paste(iTrait,iInteractionTrait,sep="-"),
+                                                   data.frame(module="mta",analysisId=mtaAnalysisId, trait=paste(iTrait,iInteractionTrait,sep=":"),
                                                               environment="across",
                                                               parameter=c("mean","CV", "r2","Vg","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","n"),
                                                               value=c(mean(pp2$predictedValue, na.rm=TRUE), cv, mean(pp2$reliability), Vg, length(goodFields) ),
