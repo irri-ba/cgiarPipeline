@@ -272,6 +272,7 @@ metLMM <- function(
             }
           }else{
             rTermsTrait <- rTermsTrait
+            interacsUnlist <- NULL
           }
           rTermsTrait <- setdiff(rTermsTrait, fixedTermTrait)
           
