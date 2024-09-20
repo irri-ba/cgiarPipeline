@@ -65,7 +65,7 @@ mtaLmmFlex <- function(
   # mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   
   # add the other available columns to the dataset
-  ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
+  ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId, trait = trait)      
   mydata <<- ff$predictions
   # detect if we expect FA terms
   nPCs <- unlist(lapply(inputFormulation, function(x){x$nPC}))
