@@ -146,7 +146,7 @@ staLMM <- function(
   }
   predictionsList <- list(); columnsToAdd <- character(); counter=1
   library(LMMsolver)
-  for(iTrait in trait){ # iTrait=trait[1]
+  for(iTrait in trait){ # iTrait=trait[5]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     mydata[,paste(iTrait,"residual",sep="-")] <- NA
     
@@ -260,7 +260,8 @@ staLMM <- function(
               if(!inherits(mixRandom,"try-error") ){ # if random model runs well try the fixed effect model  # & ((length(factorsFittedGreater) > 0) )
                 ## save residuals
                 whereResidualGoes <- mydataSub[which(!is.na(mydataSub$trait)),"rowindex"]
-                columnsToAdd <- c(columnsToAdd, paste(iTrait,"residual",sep="-"))
+                
+                columnsToAdd <- unique(c(columnsToAdd, paste(iTrait,"residual",sep="-")))
                 mydata[whereResidualGoes,paste(iTrait,"residual",sep="-")] <- mixRandom$residuals[,1]
                 sm <- summary(mixRandom, which = "variances")
                 newRanran <- setdiff( (sm[,1])[which(sm[,2] >0.05)] , c("residual",genoUnitTraitField,"s(row, col)"))
@@ -525,7 +526,7 @@ staLMM <- function(
   ### change column names back for mapping
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
   ##
-  phenoDTfile$data$pheno <- mydata[,unique(c(originalColumns,columnsToAdd))]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
+  phenoDTfile$data$pheno <- cbind(phenoDTfile$data$pheno, mydata[,columnsToAdd]) #mydata[,unique(c(originalColumns,columnsToAdd))]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
   ## add which analysisId was used as input
   modeling <- data.frame(module="sta",  analysisId=staAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
