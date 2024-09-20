@@ -226,7 +226,7 @@ metLMM <- function(
           # make sure the terms to be fitted have more than one level
           
           effectTypeTrait <- phenoDTfile$modeling[which(phenoDTfile$modeling$analysisId == analysisId & phenoDTfile$modeling$trait == iTrait & phenoDTfile$modeling$parameter == "designationEffectType"),"value"]
-          if(median(effectTypeTrait)[1] == "BLUP"){ # if STA was BLUPs deregress
+          if(names(sort(table(effectTypeTrait), decreasing = TRUE))[1] == "BLUP"){ # if STA was BLUPs deregress
             mydataSub$predictedValue <- mydataSub$predictedValue/mydataSub$reliability
           }
           if(!is.null(randomTerm)){
