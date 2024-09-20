@@ -94,6 +94,21 @@ individualVerification <- function(
   }else{
     object$modeling <- rbind(object$modeling, modeling[, colnames(object$modeling)])
   }
+  # metrics
+  nMarkers = ncol(Mexpec)
+  nInds = nrow(Mexpec)
+  monomorphicMarkersN = length(which(apply(Mpro,2,var,na.rm=TRUE)==0))
+  polymorphicMarkersN = nMarkers - monomorphicMarkersN
+  indivMatchedN = length(which(res$metricsInd$probMatch == 1))
+  indivUnmatchedN = nInds - indivMatchedN 
+  object$metrics <- rbind(object$metrics,
+                               data.frame(module="gVerif",analysisId=analysisId, trait="none", environment="general",
+                                          parameter= c("nMarkers","nInds", "monomorphicMarkersN","polymorphicMarkersN","indivMatchedN","indivUnmatchedN"), 
+                                          method= c("sum","sum","sum","sum","sum","sum"), 
+                                          value=c(nMarkers, nInds, monomorphicMarkersN,polymorphicMarkersN,indivMatchedN, indivUnmatchedN ), 
+                                          stdError= NA
+                               )
+  )
   ##############
   ## predictions
   pp <- reshape(res$metricsInd, idvar = "designation", varying = list(2:ncol(res$metricsInd)),
