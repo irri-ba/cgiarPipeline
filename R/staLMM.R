@@ -259,7 +259,8 @@ staLMM <- function(
               # with genotypes as fixed
               if(!inherits(mixRandom,"try-error") ){ # if random model runs well try the fixed effect model  # & ((length(factorsFittedGreater) > 0) )
                 ## save residuals
-                whereResidualGoes <- mydataSub[which(!is.na(mydataSub$trait)),"rowindex"]
+                provMydataSub <- droplevels(mydataSub[which(!is.na(mydataSub[,iGenoUnit])),])
+                whereResidualGoes <- provMydataSub[which(!is.na(provMydataSub$trait)),"rowindex"]
                 
                 columnsToAdd <- unique(c(columnsToAdd, paste(iTrait,"residual",sep="-")))
                 mydata[whereResidualGoes,paste(iTrait,"residual",sep="-")] <- mixRandom$residuals[,1]
