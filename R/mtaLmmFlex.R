@@ -554,7 +554,7 @@ mtaLmmFlex <- function(
                                    found <- which(mydataForEntryType$designation %in% x)
                                    if(length(found) > 0){
                                      x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-                                   }else{x2 <- "unknownType"}
+                                   }else{x2 <- "unlabeled"}
                                    return(x2)
                                  }), sep = "_")
           mydataForEntryType <- NULL

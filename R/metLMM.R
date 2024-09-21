@@ -715,7 +715,7 @@ metLMM <- function(
               found <- which(mydataForEntryType$designation %in% x)
               if(length(found) > 0){
                 x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-              }else{x2 <- "unknown"}
+              }else{x2 <- ""}
               return(x2)
             })
             mydataForEntryType <- NULL

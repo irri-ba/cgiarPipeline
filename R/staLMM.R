@@ -315,7 +315,7 @@ staLMM <- function(
                     pp <- data.frame(designation,predictedValue,stdError)
                     pp$trait <- iTrait
                     pp$environmentF <- iField
-                    pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "##"),"unknown_type"); return(x2)})
+                    pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "##"),"unlabeled"); return(x2)})
                     if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
                     ## heritabilities
                     ss = mixRandom$VarDf#summary(mixRandom, which = "variances")
@@ -380,7 +380,7 @@ staLMM <- function(
                   pp <- data.frame(designation,predictedValue,stdError)
                   pp$trait <- iTrait
                   pp$environmentF <- iField
-                  pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+                  pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); return(x2)})
                   if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
                   ## heritabilities
                   ss = mixRandom$VarDf
@@ -415,7 +415,7 @@ staLMM <- function(
                 pp$reliability <- 1e-6
                 pp$trait <- iTrait
                 pp$environmentF <- iField
-                pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+                pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); return(x2)})
                 if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
                 predictionsList[[counter]] <- pp;
                 cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
@@ -446,7 +446,7 @@ staLMM <- function(
               pp$reliability <- 1e-6
               pp$trait <- iTrait
               pp$environmentF <- iField
-              pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+              pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); return(x2)})
               if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
               predictionsList[[counter]] <- pp;
               cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
@@ -478,7 +478,7 @@ staLMM <- function(
             pp$stdError <- sd(pp$predictedValue)  # 1
             pp$trait <- iTrait
             pp$environmentF <- iField
-            pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+            pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); return(x2)})
             if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
             pp$reliability <- 1e-6
             predictionsList[[counter]] <- pp;
