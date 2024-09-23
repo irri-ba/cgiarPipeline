@@ -422,7 +422,7 @@ staLMM <- function(
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
                                                         parameter=paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),
-                                                                         method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
+                                                        method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
                                                         value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ),
                                                         stdError=c(0,0,0,0, 0, 0)
                                              )
@@ -468,17 +468,22 @@ staLMM <- function(
           
         }else{
           
-          for(iGenoUnit in genoUnitTraitField){
+          for(iGenoUnit in genoUnitTraitField){ # iGenoUnit = genoUnitTraitField[1]
             
             if(verbose){
               cat(paste("No design to fit, aggregating for predicted values, std. errors assumed equal to std. deviation of the trial. In addition assuming h2 = 0 for the trial \n"))
             }
             pp <- aggregate(as.formula(paste("trait ~", iGenoUnit)), FUN=mean, data=mydataSub)
-            colnames(pp)[2] <- "predictedValue"
+            colnames(pp) <- c("designation", "predictedValue" )
             pp$stdError <- sd(pp$predictedValue)  # 1
             pp$trait <- iTrait
             pp$environmentF <- iField
-            pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); return(x2)})
+            pp$entryType <- apply(data.frame(pp$designation),1,function(x){
+              found <-which(mydataSub$designation %in% x); 
+              x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); 
+              return(x2)
+            }
+            )
             if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
             pp$reliability <- 1e-6
             predictionsList[[counter]] <- pp;
