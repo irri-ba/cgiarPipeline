@@ -42,9 +42,6 @@ pgg <- function(
   mydata <- merge(mydata, myPed[,c("designation","yearOfOrigin")], by="designation", all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
   
-  # myPheno <- phenoDTfile$data$pheno
-  # colnames(myPheno) <- cgiarBase::replaceValues(colnames(myPheno), Search = paramsPheno$value, Replace = paramsPheno$parameter )
-  
   if(length(which(paramsPheno$parameter == "year")) == 0){
     mydata$year <- mydata$yearOfOrigin 
     cat("Year column was not mapped, assuming year of origin and first year of testing is the same")
@@ -84,7 +81,7 @@ pgg <- function(
                                    )
       )
       currentModeling <- data.frame(module="pgg", analysisId=pggAnalysisId,trait=iTrait, environment=uE, 
-                                    parameter=c("percentage(%)","verbose"), value=c(percentage, verbose))
+                                    parameter=c("percentage(%)","verbose","classifier"), value=c(percentage, verbose, by))
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
     }
     
