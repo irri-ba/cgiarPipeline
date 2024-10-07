@@ -23,7 +23,7 @@ pgg <- function(
   
   # add missing columns
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  keep <- which( paramsPheno$parameter %!in% c("trait","designation","environment","rep","row","col","iBlock") )
+  keep <- which( paramsPheno$parameter %!in% c("trait","designation","environment","rep","row","col","iBlock","gid","entryType","stage","pipeline") )
   if(length(keep) > 0){
     toExtractFromData <- paramsPheno[keep, "value"]
     tpe <- unique(phenoDTfile$data$pheno[,c("environment",toExtractFromData)])
