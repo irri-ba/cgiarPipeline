@@ -56,11 +56,13 @@ pgg <- function(
     uEnvironments <- unique(mydata[,by])
     for(uE in uEnvironments){ # uE <- uEnvironments[1]
       # subset data
+      if(verbose){cat(paste("Analyzing environment", uE,"\n"))}
       mydataSub <- droplevels(mydata[which((mydata$trait == iTrait) & (mydata[,by] %in% uE)  ),])
       # calculate parameters
       rels <- mydataSub$rel;
       badrels <- which(rels < 0); if(length(badrels) > 0){ rels[badrels] <- 1e-6}
       r <- ifelse(length(na.omit(rels)) > 0, mean(sqrt(na.omit(rels)), na.rm=TRUE), 1e-6)
+      r2 <- r^2
       sigma<- sd(mydataSub$predictedValue, na.rm = TRUE)
       mu<- mean(mydataSub$predictedValue, na.rm = TRUE)
       min.x<- min(mydataSub$predictedValue, na.rm = TRUE)
@@ -71,12 +73,14 @@ pgg <- function(
       R <- r * sigma * i
       ggAge =  R/age
       nTrials = length(unique(mydataSub[,"environment"]))
+      nInds = length(unique(mydataSub[,"designation"]))
+      nIndsSelected <- floor(nInds*p)
       ##
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                    data.frame(module="pgg",analysisId=pggAnalysisId, trait= iTrait, environment=uE, 
-                                              parameter=c("r","sigmaG","meanG","min.G","max.G", "cycleLength","i","R","PGG","nEnvs"), 
-                                              method=c("sqrt(r2)","sd(BLUP)","sum(x)/n","min(x)","max(x)","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength","sum"), 
-                                              value=c(r,sigma, mu, min.x, max.x, age, i, R, ggAge,nTrials), 
+                                              parameter=c("r","r2","sigmaG","meanG","min.G","max.G", "cycleLength","i","R","PGG","nEnvs","nInds","nIndsSel"), 
+                                              method=c("sqrt(r2)","mean((G-PEV)/G)","sd(BLUP)","sum(x)/n","min(x)","max(x)","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength","sum","sum","nInds*p"), 
+                                              value=c(r,r2,sigma, mu, min.x, max.x, age, i, R, ggAge,nTrials, nInds, nIndsSelected), 
                                               stdError=0
                                    )
       )
