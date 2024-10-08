@@ -413,7 +413,7 @@ staLMM <- function(
                 }else{ # if there was singularities we just take means and assigna h2 of zero
                   if(verbose){cat(paste("No design to fit or singularities encountered in the random model, aggregating and assuming h2 = 0 \n"))}
                   pp <- aggregate(as.formula(paste("trait ~", iGenoUnit)), FUN=mean, data=mydataSub)
-                  colnames(pp)[2] <- "predictedValue"
+                  colnames(pp)[1:2] <- c("designation","predictedValue")
                   pp$stdError <- sd(pp$predictedValue) #1
                   pp$reliability <- 1e-6
                   pp$trait <- iTrait
@@ -443,7 +443,7 @@ staLMM <- function(
                 
                 if(verbose){cat(paste("No design to fit, aggregating and assuming h2 = 0 \n"))}
                 pp <- aggregate(as.formula(paste("trait ~", iGenoUnit)), FUN=mean, data=mydataSub)
-                colnames(pp)[2] <- "predictedValue"
+                colnames(pp)[1:2] <- c("designation","predictedValue")
                 pp$stdError <- sd(pp$predictedValue)  # 1
                 # pp$status <- "averaged"
                 pp$reliability <- 1e-6
@@ -477,7 +477,7 @@ staLMM <- function(
                 cat(paste("No design to fit, aggregating for predicted values, std. errors assumed equal to std. deviation of the trial. In addition assuming h2 = 0 for the trial \n"))
               }
               pp <- aggregate(as.formula(paste("trait ~", iGenoUnit)), FUN=mean, data=mydataSub)
-              colnames(pp) <- c("designation", "predictedValue" )
+              colnames(pp)[1:2] <- c("designation","predictedValue")
               pp$stdError <- sd(pp$predictedValue)  # 1
               pp$trait <- iTrait
               pp$environmentF <- iField
