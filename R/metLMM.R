@@ -5,6 +5,7 @@ metLMM <- function(
     fixedTerm= c("environment"),  randomTerm=c("designation"),  residualBy=NULL,
     interactionsWithGeno=NULL, envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
+    entryTypeSubset=NULL,
     heritLB= 0.15,  heritUB= 0.95,
     meanLB=0, meanUB=Inf,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
@@ -63,6 +64,7 @@ metLMM <- function(
   mydata <- phenoDTfile$predictions #
   if (nrow(mydata) < 2) stop("Not enough data is available to perform a multi trial analysis. Please perform an STA before trying to do an MET.", call. = FALSE)
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
+  if(!is.null(entryTypeSubset)){mydata <- mydata[which(mydata$entryType %in% entryTypeSubset),]}
   # if the user provides two ids with same trait and environments kill the job
   allTraitsInMyData <- unique(na.omit(mydata$trait))
   for(iTrait in allTraitsInMyData){ # iTrait = allTraitsInMyData[1]

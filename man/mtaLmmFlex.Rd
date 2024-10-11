@@ -13,6 +13,7 @@ mtaLmmFlex(
     analysisIdForGenoModifications=NULL,
     inputFormulation=NULL, envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
+    entryTypeSubset=NULL,
     heritLB= 0.15,  heritUB= 0.95, meanLB=0, meanUB=Inf,
     modelType="blup", nMarkersRRBLUP=1000,
     deregress=FALSE, maxIters=50, batchSizeToPredict=500, 
@@ -44,6 +45,9 @@ A character vector specifying the family distribution for each trait in case nor
 }
 \item{useWeights}{
 A TRUE or FALSE statement to specify if the weights using the standard error should be applied. The default is TRUE since we assume the two-stage model.
+}
+\item{entryTypeSubset}{
+A character vector indicating which entryTypes should be used in the modeling. For example, with multi-year data the user may want to subset to a specific testing stage. The default is NULL which implies that all entry types will be included in the analysis.
 }
 \item{heritLB}{
 A numeric value or vector for trait heritability and reliablity lower-bound-threshold(s). Any trait by environment combination below this value will be excluded from the analysis.

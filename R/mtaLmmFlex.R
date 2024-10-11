@@ -5,6 +5,7 @@ mtaLmmFlex <- function(
     inputFormulation=NULL, 
     envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
+    entryTypeSubset=NULL,
     heritLB= 0.15,  heritUB= 0.95,
     meanLB=0, meanUB=Inf,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
@@ -67,6 +68,7 @@ mtaLmmFlex <- function(
   # add the other available columns to the dataset
   ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId, trait = trait)      
   mydata <<- ff$predictions
+  if(!is.null(entryTypeSubset)){mydata <- mydata[which(mydata$entryType %in% entryTypeSubset),]}
   # detect if we expect FA terms
   nPCs <- unlist(lapply(inputFormulation, function(x){x$nPC}))
   areThereFas <- ifelse(sum(nPCs)>0,TRUE,FALSE)
