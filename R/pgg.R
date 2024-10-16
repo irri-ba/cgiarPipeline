@@ -19,7 +19,11 @@ pgg <- function(
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   paramsPheno <- phenoDTfile$metadata$pheno
   paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
-  colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  
+  '%!in%' <- function(x,y)!('%in%'(x,y)) 
+  toChange <- which(colnames(mydata) %!in% paramsPheno$value)
+  
+  colnames(mydata)[toChange] <- cgiarBase::replaceValues(colnames(mydata)[toChange], Search = paramsPheno$value, Replace = paramsPheno$parameter )
   
   # add missing columns
   '%!in%' <- function(x,y)!('%in%'(x,y))

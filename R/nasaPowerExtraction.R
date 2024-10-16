@@ -115,7 +115,7 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
 
 
 
-summaryWeather <- function(object){
+summaryWeather <- function(object, wide=FALSE){
   
   if(is.null(object$data$weather)){
     out <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(out) <- c("environment", "trait", "parameter" ,  "value")
@@ -199,6 +199,13 @@ summaryWeather <- function(object){
     
   }
   
+  if(wide){
+    out$tp <- paste(out$trait, out$parameter)
+    out <- reshape(out[,c("environment","tp","value")], direction = "wide", idvar = "environment",
+                       timevar = "tp", v.names = "value", sep= "_")
+    rownames(out) <- out$environment
+    out <- out[,-1]
+  }
   
   # meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
   #             parameter=c(rep("mean",3), rep("sd",3), c("coordinate", "coordinate", "date", "date")),
