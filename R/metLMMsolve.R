@@ -1,6 +1,6 @@
 metLMMsolve <- function(
     phenoDTfile= NULL, analysisId=NULL,
-    fixedTerm= list("environment"),  randomTerm=list("designation"), expCovariates=NULL,
+    fixedTerm= list("1"),  randomTerm=NULL, expCovariates=NULL,
     envsToInclude=NULL, trait= NULL, traitFamily=NULL, useWeights=TRUE,
     calculateSE=TRUE, heritLB= 0.15,  heritUB= 0.95,
     meanLB=0, meanUB=Inf, nPC=NULL,   # subsetVariable=NULL, subsetVariableLevels=NULL,
@@ -33,7 +33,7 @@ metLMMsolve <- function(
         }
       } 
     }
-  }
+  }else{if(length(randomTerm) == 0){randomTerm <- NULL}}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
   if(length(fixedTerm) == 0 | is.null(fixedTerm)){fixedTerm <- "1"}
   traitsForExpCovariates <- unique(phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),"trait"])
