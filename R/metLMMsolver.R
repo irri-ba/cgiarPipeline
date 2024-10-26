@@ -311,7 +311,9 @@ metLMMsolver <- function(
               if(ncol(namesForEnvs)==1){ # if there's no interactions
                 envs <- rep("(Intercept)",nrow(M))
               }else{ # if there's interactions
-                namesForEnvs <- namesForEnvs[,-1,drop=FALSE]
+                nLevsInEnvs <- apply(namesForEnvs,2, function(x){length(unique(x))})
+                # remove the one with the biggest number of levels
+                namesForEnvs <- namesForEnvs[,-c(which(nLevsInEnvs == max(nLevsInEnvs))),drop=FALSE]
                 envs <- apply(namesForEnvs,1,function(x){paste(x,collapse = ":")})
               }
               xxList=NULL;Mlist=NULL
