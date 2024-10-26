@@ -206,6 +206,7 @@ summaryWeather <- function(object, wide=FALSE){
     rownames(out) <- out$environment
     Z = model.matrix(~environment-1, data=out); colnames(Z) <- gsub("environment","",colnames(Z))
     out <- cbind(out,Z)
+    colnames(out) <- gsub("[[:punct:]]", "", colnames(out) )
     colnames(out) <- gsub(" ","",colnames(out))
     out <- out[,-1]
   }
