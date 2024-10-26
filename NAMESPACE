@@ -3,7 +3,7 @@ importFrom("graphics", "axis", "lines", "par", "points", "title")
 importFrom("stats", "cov", "dist", "median", "model.matrix", "optimize", "pbeta", "ppoints", "predict", "smooth.spline","var")
 export(
        traitTransformation,newOutliersFun, modifExpDesign, equalizeTraits,
-       staLMM, metLMM, metLMMsolve, mtaLmmFlex, indexDesire, baseIndex, ocs, rggMackay, rggPiepho, pgg,
+       staLMM, metLMM, metLMMsolver, mtaLmmFlex, indexDesire, baseIndex, ocs, rggMackay, rggPiepho, pgg,
        singleCrossMat, nasaPowerExtraction, summaryWeather, 
        numberFounders, individualVerification, markerAssistedSelection
        )
