@@ -418,10 +418,10 @@ metLMMsolver <- function(
           pick <- mix$ndxCoefficients[[iGroup]]
           shouldBeOne <- which(pick == 0)
           if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
-          blup <- (Mprov[[iGroup]] %*% mix$coefMME[pick]) + mu; blup <- as.vector(blup)
-          names(blup) <- rownames(Mprov[[iGroup]]) # Mprov will always be a matrix wither a diagonal or different than but do it across for consistency
+          blup <- (Msub[[iGroup]] %*% mix$coefMME[pick]) + mu; blup <- as.vector(blup)
+          names(blup) <- rownames(Msub[[iGroup]]) # Msub will always be a matrix wither a diagonal or different than but do it across for consistency
           start <- sum(mix$EDdf[1:(which(mix$EDdf$Term == iGroup) - 1),"Model"]) # we don't add a one because we need the intercept
-          nEffects <- ncol(Mprov[[iGroup]])
+          nEffects <- ncol(Msub[[iGroup]])
           Vg <- ss[iGroup,"Variance"] 
           if(calculateSE){
             if(verbose){message(paste("   Calculating standar errors for",iTrait, iGroup,"predictions"))}
@@ -433,7 +433,7 @@ metLMMsolver <- function(
             stdError <- list()
             for(s in 1:length(startPev)){
               use <- (startPev[s]:endPev[s])
-              stdError[[s]] <-  sqrt(Matrix::diag( Mprov[[iGroup]][use,] %*% Matrix::tcrossprod( Cinv, Mprov[[iGroup]][use,]) ) ) 
+              stdError[[s]] <-  sqrt(Matrix::diag( Msub[[iGroup]][use,] %*% Matrix::tcrossprod( Cinv, Msub[[iGroup]][use,]) ) ) 
             }
             stdError <- unlist(stdError)
             reliability <- abs((Vg - (stdError^2)) /Vg) # reliability <- abs((Vg - Matrix::diag(pev))/Vg)
