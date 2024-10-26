@@ -1,5 +1,5 @@
-\name{metLMMsolve}
-\alias{metLMMsolve}
+\name{metLMMsolver}
+\alias{metLMMsolver}
 
 \title{
 Multi-environmental trial analysis pipeline using LMMsove function from LMMsolver package
@@ -8,7 +8,7 @@ Multi-environmental trial analysis pipeline using LMMsove function from LMMsolve
 Perform the multi-trial genetic evaluation according to a custom-based formula.
 }
 \usage{
-metLMMsolve(
+metLMMsolver(
     phenoDTfile= NULL, analysisId=NULL,
     fixedTerm= list("1"),  randomTerm=NULL, expCovariates=NULL,
     envsToInclude=NULL, trait= NULL, traitFamily=NULL, useWeights=TRUE,
@@ -103,7 +103,7 @@ result$metadata$pheno
 
 nPC=c(0,0,0,0);names(nPC) <- c("weather","geno","pedigree", "Yield_Mg_ha")
 nPC
-final <- metLMMsolve(
+final <- metLMMsolver(
   phenoDTfile= result, # analysis to be picked from predictions database
   analysisId=result$status$analysisId[2],
   fixedTerm= list("environment"),

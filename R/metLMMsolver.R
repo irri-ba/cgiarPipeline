@@ -1,4 +1,4 @@
-metLMMsolve <- function(
+metLMMsolver <- function(
     phenoDTfile= NULL, analysisId=NULL,
     fixedTerm= list("1"),  randomTerm=NULL, expCovariates=NULL,
     envsToInclude=NULL, trait= NULL, traitFamily=NULL, useWeights=TRUE,
@@ -41,7 +41,7 @@ metLMMsolve <- function(
   ##########################################
   ##########################################
   ## EXTRACT POSSIBLE EXPLANATORY COVARIATES AND FORM KERNELS (30 lines)
-  Weather <- cgiarPipeline::summaryWeather(phenoDTfile, wide=TRUE) # in form of covariates
+  Weather <- summaryWeather(phenoDTfile, wide=TRUE) # in form of covariates
   Weather <- apply(Weather,2,sommer::imputev)
   colnames(Weather) <- gsub(" ","",colnames(Weather))
   covars <- unique(unlist(expCovariates))
