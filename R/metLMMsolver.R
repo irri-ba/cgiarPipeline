@@ -230,20 +230,21 @@ metLMMsolver <- function(
           goodTerms <- which( ( unlist(lapply(randomTerm,length)) - unlist(lapply(randomTermProv,length)) ) == 0 )
           randomTermProv <- randomTerm[goodTerms]
           randomTermProv <- unique(randomTermProv)
+          expCovariatesProv <- expCovariates[goodTerms]
           # if reduced models reduce the datasets to the needed explanatory covariates
           if(!is.null(randomTermProv)){
             for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
               randomTermProv2 <- randomTermProv[[irandom]]
               for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 1
-                if( expCovariates[[irandom]][irandom2] == "weather"){
+                if( expCovariatesProv[[irandom]][irandom2] == "weather"){
                   M <- Wchol
-                }else if(expCovariates[[irandom]][irandom2] == "geno"){
+                }else if(expCovariatesProv[[irandom]][irandom2] == "geno"){
                   M = Gchol
-                }else if(expCovariates[[irandom]][irandom2] == "pedigree"){
+                }else if(expCovariatesProv[[irandom]][irandom2] == "pedigree"){
                   M <- Nchol
-                }else if(expCovariates[[irandom]][irandom2] %in% traitsForExpCovariates){ # Trait kernel
-                  classify <- randomTermForCovars[which(covars == expCovariates[[irandom]][irandom2])]
-                  M <- TraitKernels[[expCovariates[[irandom]][irandom2]]][[classify]] # Schol equivalent
+                }else if(expCovariatesProv[[irandom]][irandom2] %in% traitsForExpCovariates){ # Trait kernel
+                  classify <- randomTermForCovars[which(covars == expCovariatesProv[[irandom]][irandom2])]
+                  M <- TraitKernels[[expCovariatesProv[[irandom]][irandom2]]][[classify]] # Schol equivalent
                 }else{ # No kernel
                   namesZ <- unique(prov[,randomTermProv2[irandom2]])
                   M <- Matrix::Diagonal(n=length(namesZ)); rownames(M) <- colnames(M) <- namesZ
@@ -251,26 +252,26 @@ metLMMsolver <- function(
                 goodLevels <- intersect(unique(prov[,randomTermProv2[irandom2]]), rownames(M) )
                 if(length(goodLevels) > 0){ # only if we make a match we reduce the dataset
                   prov <- prov[which(prov[,randomTermProv2[irandom2]] %in% goodLevels),]
-                }
+                }else{expCovariatesProv[[irandom]][irandom2]="none"}# else we don't and change to "none" the kernel for that effect
               }
             }
           }
           ## build and add the incidence matrices
           groupingTermProv <- Mprov <- envsProv <- list()
           if(!is.null(randomTermProv)){
-            for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=4
+            for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
               randomTermProv2 <- randomTermProv[[irandom]]
               xxList <- Mlist <- list()
-              for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 1
-                if( expCovariates[[irandom]][irandom2] == "weather"){
+              for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 2
+                if( expCovariatesProv[[irandom]][irandom2] == "weather"){
                   M <- Wchol # Weather
-                }else if(expCovariates[[irandom]][irandom2] == "geno"){
+                }else if(expCovariatesProv[[irandom]][irandom2] == "geno"){
                   M = Gchol # Markers
-                }else if(expCovariates[[irandom]][irandom2] == "pedigree"){
+                }else if(expCovariatesProv[[irandom]][irandom2] == "pedigree"){
                   M <- Nchol # Pedigree
-                }else if(expCovariates[[irandom]][irandom2] %in% traitsForExpCovariates){ # Trait kernel
-                  classify <- randomTermForCovars[which(covars == expCovariates[[irandom]][irandom2])]
-                  M <- TraitKernels[[expCovariates[[irandom]][irandom2]]][[classify]] # Schol equivalent
+                }else if(expCovariatesProv[[irandom]][irandom2] %in% traitsForExpCovariates){ # Trait kernel
+                  classify <- randomTermForCovars[which(covars == expCovariatesProv[[irandom]][irandom2])]
+                  M <- TraitKernels[[expCovariatesProv[[irandom]][irandom2]]][[classify]] # Schol equivalent
                 }else{ # No kernel
                   if( unlist(lapply(prov, class))[randomTermProv2[irandom2]] %in% c("factor","character") ){
                     namesZ <- unique(prov[,randomTermProv2[irandom2]])
