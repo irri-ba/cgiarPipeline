@@ -225,6 +225,7 @@ metLMMsolver <- function(
               }
             }
           }
+          randomTermProv <- unique(randomTermProv)
           # if reduced models reduce the datasets to the needed explanatory covariates
           if(!is.null(randomTermProv)){
             for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
@@ -253,7 +254,7 @@ metLMMsolver <- function(
           ## build and add the incidence matrices
           groupingTermProv <- Mprov <- envsProv <- list()
           if(!is.null(randomTermProv)){
-            for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
+            for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=4
               randomTermProv2 <- randomTermProv[[irandom]]
               xxList <- Mlist <- list()
               for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 1
@@ -318,7 +319,7 @@ metLMMsolver <- function(
           }
           randomTermTrait[[iTrait]] <- unique(randomTermProv)
           myDataTraits[[iTrait]] <- prov # dataset
-          names(groupingTermProv) <- names(envsProv) <- names(randomTermTrait[[iTrait]]) <- names(Mprov) <- unlist(lapply(randomTerm, function(x){paste(x,collapse = "_")}))
+          names(groupingTermProv) <- names(envsProv) <- names(randomTermTrait[[iTrait]]) <- names(Mprov) <- unlist(lapply(randomTermProv, function(x){paste(x,collapse = "_")}))
           groupingTermTrait[[iTrait]] <- groupingTermProv
           Mtrait[[iTrait]] <- Mprov
           envsTrait[[iTrait]] <- envsProv
