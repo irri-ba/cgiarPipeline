@@ -24,6 +24,7 @@ metLMMsolver <- function(
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(is.null(traitFamily)){traitFamily <- rep("quasi(link = 'identity', variance = 'constant')", length(trait))}
   if(!is.null(randomTerm)){
+    randomTerm <- unique(randomTerm)
     if(is.null(expCovariates)){expCovariates <- randomTerm; expCovariates <- lapply(expCovariates, function(x){rep("none",length(x))})}else{
       if(length(expCovariates) != length(randomTerm)){
         stop("Please ensure that expCovariates and randomTerm arguments have the same length.", call. = FALSE)
@@ -35,7 +36,7 @@ metLMMsolver <- function(
     }
   }else{if(length(randomTerm) == 0){randomTerm <- NULL}}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
-  if(length(fixedTerm) == 0 | is.null(fixedTerm)){fixedTerm <- "1"}
+  if(length(fixedTerm) == 0 | is.null(fixedTerm)){fixedTerm <- "1"}else{fixedTerm <- unique(fixedTerm)}
   traitsForExpCovariates <- unique(phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),"trait"])
   if(!is.null(nPC)){if(length(intersect(names(nPC), c("geno","weather","pedigree", traitsForExpCovariates))) == 0){stop("The nPC argument needs to be a named numeric vector with names 'geno', 'weather' and 'pedigree' or traits available.", call. = FALSE)}}
   ##########################################
@@ -225,6 +226,9 @@ metLMMsolver <- function(
               }
             }
           }
+          # any term that is modified from what user specified we remove it totally, is better than fitting something undesired
+          goodTerms <- which( ( unlist(lapply(randomTerm,length)) - unlist(lapply(randomTermProv,length)) ) == 0 )
+          randomTermProv <- randomTerm[goodTerms]
           randomTermProv <- unique(randomTermProv)
           # if reduced models reduce the datasets to the needed explanatory covariates
           if(!is.null(randomTermProv)){
