@@ -125,7 +125,7 @@ metLMMsolver <- function(
           S <- as.matrix(Matrix::nearPD(x = S, corr = FALSE, 
                                         keepDiag = FALSE, base.matrix = FALSE, do2eigen = TRUE, 
                                         doSym = FALSE, doDykstra = TRUE, only.values = FALSE, 
-                                        ensureSymmetry = !isSymmetric(Sigma), eig.tol = 1e-06, 
+                                        ensureSymmetry = !isSymmetric(S), eig.tol = 1e-06, 
                                         conv.tol = 1e-07, posd.tol = 1e-08, maxit = 100, conv.norm.type = "I", 
                                         trace = FALSE)$mat)
           Schol <- t(chol(S))
