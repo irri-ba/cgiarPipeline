@@ -204,6 +204,8 @@ summaryWeather <- function(object, wide=FALSE){
     out <- reshape(out[,c("environment","tp","value")], direction = "wide", idvar = "environment",
                        timevar = "tp", v.names = "value", sep= "_")
     rownames(out) <- out$environment
+    Z = model.matrix(~environment-1, data=out); colnames(Z) <- gsub("environment","",colnames(Z))
+    out <- cbind(out,Z)
     colnames(out) <- gsub(" ","",colnames(out))
     out <- out[,-1]
   }
