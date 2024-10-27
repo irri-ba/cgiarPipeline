@@ -197,7 +197,7 @@ metLMMsolver <- function(
   metrics <- phenoDTfile$metrics
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
   myDataTraits <- fixedTermTrait <- randomTermTrait <- groupingTermTrait <- Mtrait <- envsTrait <- entryTypesTrait <- list()
-  for(iTrait in trait){ # iTrait = trait[1]
+  for(iTrait in trait){ # iTrait = trait[3]
     # filter for records available
     vt <- which(mydata[,"trait"] == iTrait)
     if(length(vt) > 0){ # we have data for the trait
@@ -210,7 +210,7 @@ metLMMsolver <- function(
       goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value >= heritLB[iTrait]) & (pipeline_metricsSub$value <= heritUB[iTrait])),"environment"])
       prov <- prov[which(prov$environment %in% goodFields),]
       # remove bad environment based on environment means
-      pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("mean")),]
+      pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2", apply(expand.grid( c("mean"), c("designation","mother","father")),1,function(f){paste(f,collapse = "_")}) ) ),]
       goodFieldsMean <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > meanLB[iTrait]) & (pipeline_metricsSub$value < meanUB[iTrait])),"environment"])
       prov <- prov[which(prov$environment %in% goodFieldsMean),]
       if(nrow(prov) > 0){ # if after filters there's still data for this trait we can continue and save the data
@@ -360,7 +360,7 @@ metLMMsolver <- function(
   ## MODEL FITTING
   if(verbose){message("Fitting a model.")}
   predictionsList <- list(); 
-  for(iTrait in trait){ # # iTrait = trait[1]  iTrait="value"
+  for(iTrait in names(myDataTraits)){ # # iTrait = trait[1]  iTrait="value"
     if(verbose){message(paste("Analyzing trait", iTrait))}
     mydataSub <- myDataTraits[[iTrait]] # extract dataset
     groupingSub <- groupingTermTrait[[iTrait]] # extract grouping indices
