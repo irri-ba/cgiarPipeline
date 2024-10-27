@@ -300,7 +300,9 @@ metLMMsolver <- function(
                   if(ncol(xxList[[irandom2-1]]) > 1){
                     m1 <- sommer::dsc(xxList[[irandom2-1]])
                   }else{m1 <- sommer::isc(xxList[[irandom2-1]][,1]) }
-                  m2 <- sommer::isc(xx)
+                  if(ncol(xxList[[irandom2]]) > 1){
+                    m2 <- sommer::isc(xx)
+                  }else{ m2 <- sommer::isc(xx[,1]) }
                   m3 <- sommer::vsc( m1  , m2  )
                   environmentCol <- list()
                   for(o in 1:length(m3$Z)){environmentCol[[o]] <- rep(colnames(m3$theta)[o],nrow(M))}
