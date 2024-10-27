@@ -76,12 +76,13 @@ metLMMsolver <- function(
       if("weather" %in% covars & !is.null(Weather)){
         classify <- randomTermForCovars[which(covars %in% "weather")]
         if(verbose){message(paste("   Weather kernel for",paste(classify,collapse = ","), "requested"))}
-        rownamesWeather <- rownames(Weather)
-        Weather <- apply(Weather, 2, scale)
-        Weather <- Weather[,which( !is.na(apply(Weather,2,var)) ), drop=FALSE]
-        W <- sommer::A.mat(Weather)
+        WeatherK <- Weather
+        rownamesWeather <- rownames(WeatherK)
+        WeatherK <- apply(WeatherK, 2, scale)
+        WeatherK <- WeatherK[,which( !is.na(apply(WeatherK,2,var)) ), drop=FALSE]
+        rownames(WeatherK) <- rownamesWeather
+        W <- sommer::A.mat(WeatherK)
         W <- W + diag(1e-5, ncol(W), ncol(W))
-        rownames(W) <- colnames(W) <- rownamesWeather
         Wchol <- t(chol(W))
         if(nPC["weather"] > 0){
           if(verbose){message("   Eigen decomposition of weather kernel requested")}
@@ -185,7 +186,7 @@ metLMMsolver <- function(
   if(verbose){message("Building trait datasets.")}
   metrics <- phenoDTfile$metrics
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
-  myDataTraits <- fixedTermTrait <- randomTermTrait <- groupingTermTrait <- Mtrait <- envsTrait <- list()
+  myDataTraits <- fixedTermTrait <- randomTermTrait <- groupingTermTrait <- Mtrait <- envsTrait <- entryTypesTrait <- list()
   for(iTrait in trait){ # iTrait = trait[1]
     # filter for records available
     vt <- which(mydata[,"trait"] == iTrait)
@@ -201,12 +202,11 @@ metLMMsolver <- function(
       # remove bad environment based on environment means
       pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("mean")),]
       goodFieldsMean <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > meanLB[iTrait]) & (pipeline_metricsSub$value < meanUB[iTrait])),"environment"])
-      prov <- prov[which(prov$environment %in% goodFields),]
+      prov <- prov[which(prov$environment %in% goodFieldsMean),]
       if(nrow(prov) > 0){ # if after filters there's still data for this trait we can continue and save the data
         if( var(prov[,"predictedValue"], na.rm = TRUE) > 0 ){ # check that there is variance
           # make new formula for this specific trait if it passed all the filters
           fixedTermProv <- fixedTerm
-          
           for(iFixed in 1:length(fixedTermProv)){ # for each element in the list # iFixed=1
             fixedTermProv2 <- fixedTermProv[[iFixed]]
             for(iFixed2 in  fixedTermProv2){ # for each factor in the interactions # iFixed2 = fixedTermProv2[1]
@@ -222,7 +222,7 @@ metLMMsolver <- function(
             for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=2
               randomTermProv2 <- randomTermProv[[irandom]]
               for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 2
-                if( length( table(prov[,randomTermProv2[irandom2]]) ) == 1 ){ randomTermProv[[irandom]] <- setdiff( randomTermProv[[irandom]], randomTermProv2[irandom2] )}
+                if( length( table(prov[,randomTermProv2[irandom2]]) ) <= 1 ){ randomTermProv[[irandom]] <- setdiff( randomTermProv[[irandom]], randomTermProv2[irandom2] )}
               }
             }
           }
@@ -233,6 +233,7 @@ metLMMsolver <- function(
           expCovariatesProv <- expCovariates[goodTerms]
           # if reduced models reduce the datasets to the needed explanatory covariates
           if(!is.null(randomTermProv)){
+            # reduce datasets
             for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
               randomTermProv2 <- randomTermProv[[irandom]]
               for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 1
@@ -257,12 +258,15 @@ metLMMsolver <- function(
             }
           }
           ## build and add the incidence matrices
-          groupingTermProv <- Mprov <- envsProv <- list()
+          groupingTermProv <- Mprov <- envsProv <- entryTypeProv <- list()
           if(!is.null(randomTermProv)){
             for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
               randomTermProv2 <- randomTermProv[[irandom]]
+              expCovariatesProv2 <- expCovariatesProv[[irandom]]
+              # nExp <- numeric() # to save the number of effects
               xxList <- Mlist <- list()
               for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 2
+                # get kernel
                 if( expCovariatesProv[[irandom]][irandom2] == "weather"){
                   M <- Wchol # Weather
                 }else if(expCovariatesProv[[irandom]][irandom2] == "geno"){
@@ -280,6 +284,7 @@ metLMMsolver <- function(
                     M <- Matrix::Diagonal(n=1); rownames(M) <- colnames(M) <- randomTermProv2[irandom2]
                   }
                 }
+                # build incidence matrix
                 if( unlist(lapply(prov, class))[randomTermProv2[irandom2]] %in% c("factor","character") ){
                   goodLevels <- intersect(unique(prov[,randomTermProv2[irandom2]]), rownames(M) )
                   if(length(goodLevels) == 0){ # if no match then use the regular model matrix
@@ -288,9 +293,9 @@ metLMMsolver <- function(
                   }
                   xx = lme4breeding::redmm(x=prov[,randomTermProv2[irandom2]], M=M, nPC=0) 
                 }else{xx <- sommer::isc(prov[,randomTermProv2[irandom2]])$Z}
-                # if(nPCuse > 0){colnames(xx) <- paste(randomTermProv2[irandom2], colnames(xx), sep=":")}
-                xxList[[irandom2]] = xx
-                Mlist[[irandom2]] = M
+                xxList[[irandom2]] = xx # model matrix for ith effect saved
+                Mlist[[irandom2]] = M # single factor kernel M saved
+                # if irandom > 1 expand M
                 if(irandom2 > 1){
                   if(ncol(xxList[[irandom2-1]]) > 1){
                     m1 <- sommer::dsc(xxList[[irandom2-1]])
@@ -300,13 +305,13 @@ metLMMsolver <- function(
                   environmentCol <- list()
                   for(o in 1:length(m3$Z)){environmentCol[[o]] <- rep(colnames(m3$theta)[o],nrow(M))}
                   ff <- do.call( "cbind", m3$Z )
-                  # envs <- unlist(environmentCol)
-                  M <- kronecker(Mlist[[irandom2-1]] , M, make.dimnames = TRUE)
+                  M <- kronecker(Mlist[[irandom2-1]] , M, make.dimnames = TRUE) # update M
                 }else{
                   ff <- xxList[[irandom2]]
-                  # envs <- rep("(Intercept)",nrow(M))
+                  # M <- M
                 }
               }
+              # compute environment column for later
               namesForEnvs <- lapply(Mlist,function(x){rownames(x)})
               namesForEnvs=do.call(expand.grid, rev(namesForEnvs))
               if(ncol(namesForEnvs)==1){ # if there's no interactions
@@ -320,17 +325,20 @@ metLMMsolver <- function(
               xxList=NULL;Mlist=NULL
               groupingTermProv[[irandom]] <- c( (ncol(prov)+1) : ( ncol(prov)+ncol(ff) ) ) # build grouping term
               prov <- cbind(prov, as.matrix(ff)) # bind matrix to dataset
-              Mprov[[irandom]] <- M # save M matrix
+              Mprov[[irandom]] <- M # save M matrix that combines previous effects
               envsProv[[irandom]] <- envs # save levels for environment
+              # compute entry type column for later
+              entryTypeProv[[irandom]] <- paste(expCovariatesProv2,collapse = ":") # save info for kernels used in the different effects
             }
           }
-          randomTermTrait[[iTrait]] <- unique(randomTermProv)
-          myDataTraits[[iTrait]] <- prov # dataset
-          names(groupingTermProv) <- names(envsProv) <- names(randomTermTrait[[iTrait]]) <- names(Mprov) <- unlist(lapply(randomTermProv, function(x){paste(x,collapse = "_")}))
-          groupingTermTrait[[iTrait]] <- groupingTermProv
-          Mtrait[[iTrait]] <- Mprov
-          envsTrait[[iTrait]] <- envsProv
-          # finish formula
+          randomTermTrait[[iTrait]] <- unique(randomTermProv) # random formula for the trait
+          myDataTraits[[iTrait]] <- prov # dataset for this trait
+          names(groupingTermProv) <- names(envsProv) <- names(entryTypeProv) <- names(randomTermTrait[[iTrait]]) <- names(Mprov) <- unlist(lapply(randomTermProv, function(x){paste(x,collapse = "_")}))
+          groupingTermTrait[[iTrait]] <- groupingTermProv # grouping for this trait
+          Mtrait[[iTrait]] <- Mprov # save the M matrix that combines all single M kernel matrices to later recover the BLUPs
+          envsTrait[[iTrait]] <- envsProv # save the values for environment column
+          entryTypesTrait[[iTrait]] <- entryTypeProv
+          # end of formula formation
         }
       }
     }
@@ -342,15 +350,15 @@ metLMMsolver <- function(
   predictionsList <- list(); 
   for(iTrait in trait){ # # iTrait = trait[1]  iTrait="value"
     if(verbose){message(paste("Analyzing trait", iTrait))}
-    ## get data subset
-    mydataSub <- myDataTraits[[iTrait]] 
-    groupingSub <- groupingTermTrait[[iTrait]]
-    Msub <- Mtrait[[iTrait]]
-    envsSub <- envsTrait[[iTrait]]
-    fixedTermSub <- fixedTermTrait[[iTrait]]
-    randomTermSub <- randomTermTrait[[iTrait]]
-    VarFull <- var(mydataSub[,"predictedValue"], na.rm = TRUE)
+    mydataSub <- myDataTraits[[iTrait]] # extract dataset
+    groupingSub <- groupingTermTrait[[iTrait]] # extract grouping indices
+    Msub <- Mtrait[[iTrait]] # extract the M kernel matrices
+    envsSub <- envsTrait[[iTrait]] # extract the values for the environment column
+    entryTypesSub <- entryTypesTrait[[iTrait]] # extract values for the entryType column (kernels used)
+    fixedTermSub <- fixedTermTrait[[iTrait]] # extract fixed formula
+    randomTermSub <- randomTermTrait[[iTrait]] # extract random formula
     ## deregress if needed
+    VarFull <- var(mydataSub[,"predictedValue"], na.rm = TRUE) # total variance
     effectTypeTrait <- phenoDTfile$modeling[which(phenoDTfile$modeling$analysisId == analysisId & phenoDTfile$modeling$trait == iTrait & phenoDTfile$modeling$parameter == "designationEffectType"),"value"]
     if(names(sort(table(effectTypeTrait), decreasing = TRUE))[1] == "BLUP"){ # if STA was BLUPs deregress
       mydataSub$predictedValue <- mydataSub$predictedValue/mydataSub$reliability
@@ -389,9 +397,9 @@ metLMMsolver <- function(
     # print(mix$VarDf)
     if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
       ## save the modeling used
-      currentModeling <- data.frame(module="mtaLmms", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
-                                    parameter=c("fixedFormula","randomFormula","family"), 
-                                    value=c(fix,ifelse(length(ranran)>0,ranran,NA),traitFamily[iTrait] ))
+      currentModeling <- data.frame(module="mtaLmms", analysisId=mtaAnalysisId,trait=iTrait, environment=c(rep("across",3), names(unlist(entryTypesSub))),
+                                    parameter=c("fixedFormula","randomFormula","family",rep("kernels",length(unlist(entryTypesSub)))), 
+                                    value=c(fix,ifelse(length(ranran)>0,ranran,NA),traitFamily[iTrait],unlist(entryTypesSub) ))
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
       ## save the environments used goodFields
       currentModeling <- data.frame(module="mtaLmms", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
@@ -449,7 +457,7 @@ metLMMsolver <- function(
           badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
           badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
           pp[[iGroup]] <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
-                                     trait=iTrait, entryType=iGroup, environment=envsSub[[iGroup]] )
+                                     trait=iTrait, entryType=iGroup , environment=envsSub[[iGroup]] )
           cv <- (sd(blup,na.rm=TRUE)/mean(blup,na.rm=TRUE))*100
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                        data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, 
