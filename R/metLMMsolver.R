@@ -115,7 +115,7 @@ metLMMsolver <- function(
         TraitKernels <- list()
         covarsTraits <- intersect(covars,traitsForExpCovariates)
         for(iCovar in covarsTraits){ # iCovar = covarsTraits[1] # for each trait specified in covar
-          classify <- randomTermForCovars[which(covars == iCovar)] # identify at what levels should the trait be classified
+          classify <- unlist(randomTerm)[which(covars == iCovar)] # identify at what levels should the trait be classified
           if(verbose){message(paste("  ",iCovar,"kernel for",classify, "requested"))}
           if(classify == "designation"){ # not allowed
             Schol <- diag(1); rownames(Schol) <- colnames(Schol) <- "A"
