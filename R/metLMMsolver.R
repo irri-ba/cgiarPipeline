@@ -117,24 +117,34 @@ metLMMsolver <- function(
         for(iCovar in covarsTraits){ # iCovar = covarsTraits[1] # for each trait specified in covar
           classify <- randomTermForCovars[which(covars == iCovar)] # identify at what levels should the trait be classified
           if(verbose){message(paste("  ",iCovar,"kernel for",classify, "requested"))}
-          baseData <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId & (phenoDTfile$predictions$trait == iCovar) ),]
-          wideTrait <- reshape(baseData[,c(classify,"designation","predictedValue")], direction = "wide", 
-                               idvar = "designation", timevar = classify, v.names = "predictedValue", sep= "_")
-          wideTrait <- apply(wideTrait[,-1],2,sommer::imputev)
-          colnames(wideTrait) <- gsub("predictedValue_","",colnames(wideTrait))
-          S <- cov(wideTrait)
-          S <- as.matrix(Matrix::nearPD(x = S, corr = FALSE, 
-                                        keepDiag = FALSE, base.matrix = FALSE, do2eigen = TRUE, 
-                                        doSym = FALSE, doDykstra = TRUE, only.values = FALSE, 
-                                        ensureSymmetry = !isSymmetric(S), eig.tol = 1e-06, 
-                                        conv.tol = 1e-07, posd.tol = 1e-08, maxit = 100, conv.norm.type = "I", 
-                                        trace = FALSE)$mat)
-          Schol <- t(chol(S))
-          if(nPC[iCovar] > 0){
-            if(verbose){message(paste("   Eigen decomposition of",iCovar," classified by",classify, "kernel requested"))}
-            decomp <- RSpectra::svds(Schol, k = min(c(nPC[iCovar], ncol(Schol))), which = "LM")
-            rownames(decomp$u) <- rownames(S); colnames(decomp$u) <- paste0("PC",namesSeq(1:ncol(decomp$u)))
-            Schol <- decomp$u 
+          if(classify == "designation"){ # not allowed
+            Schol <- diag(1); rownames(Schol) <- colnames(Schol) <- "A"
+          }else{ 
+            baseData <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId & (phenoDTfile$predictions$trait == iCovar) ),]
+            ww <- as.data.frame(Weather); ww$environment <- rownames(ww)
+            baseData <- merge(baseData, ww, by="environment", all.x = TRUE)
+            if( unlist(lapply(baseData,class))[classify] %in% c("numeric","integer") ){
+              Schol <- diag(1); rownames(Schol) <- colnames(Schol) <- "A"
+            }else{ # classify is a character or a factor
+              wideTrait <- reshape(baseData[,c(classify,"designation","predictedValue")], direction = "wide", 
+                                   idvar = "designation", timevar = classify, v.names = "predictedValue", sep= "_")
+              wideTrait <- apply(wideTrait[,-1],2,sommer::imputev)
+              colnames(wideTrait) <- gsub("predictedValue_","",colnames(wideTrait))
+              S <- cov(wideTrait)
+              S <- as.matrix(Matrix::nearPD(x = S, corr = FALSE, 
+                                            keepDiag = FALSE, base.matrix = FALSE, do2eigen = TRUE, 
+                                            doSym = FALSE, doDykstra = TRUE, only.values = FALSE, 
+                                            ensureSymmetry = !isSymmetric(S), eig.tol = 1e-06, 
+                                            conv.tol = 1e-07, posd.tol = 1e-08, maxit = 100, conv.norm.type = "I", 
+                                            trace = FALSE)$mat)
+              Schol <- t(chol(S))
+              if(nPC[iCovar] > 0){
+                if(verbose){message(paste("   Eigen decomposition of",iCovar," classified by",classify, "kernel requested"))}
+                decomp <- RSpectra::svds(Schol, k = min(c(nPC[iCovar], ncol(Schol))), which = "LM")
+                rownames(decomp$u) <- rownames(S); colnames(decomp$u) <- paste0("PC",namesSeq(1:ncol(decomp$u)))
+                Schol <- decomp$u 
+              }
+            }
           }
           TraitKernels[[iCovar]][[classify]] <- Schol
         }
