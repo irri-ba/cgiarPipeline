@@ -64,7 +64,9 @@ metLMMsolver <- function(
           Markers <- apply(Markers,2,sommer::imputev)
         }
         if(nPC["geno"] < 0){ # do not include extra individuals
-          Markers <- Markers[which(rownames(Markers) %in% unique(phenoDTfile$predictions$designation) ), ]
+          mydataX <-  phenoDTfile$predictions[which( phenoDTfile$predictions$analysisId %in% analysisId),]
+          Markers <- Markers[which(rownames(Markers) %in% unique(mydataX$designation) ), ]
+          if(verbose){message(paste("Subsetting marker to",nrow(Markers),"individuals present"))}
         }
         G <- sommer::A.mat(Markers-1);  G <- G + diag(1e-5, ncol(G), ncol(G))
         Gchol <- t(chol(G))
