@@ -63,6 +63,9 @@ metLMMsolver <- function(
         }else{
           Markers <- apply(Markers,2,sommer::imputev)
         }
+        if(nPC["geno"] < 0){ # do not include extra individuals
+          Markers <- Markers[which(rownames(Markers) %in% unique(phenoDTfile$predictions$designation) ), ]
+        }
         G <- sommer::A.mat(Markers-1);  G <- G + diag(1e-5, ncol(G), ncol(G))
         Gchol <- t(chol(G))
         if(nPC["geno"] > 0){
@@ -81,6 +84,9 @@ metLMMsolver <- function(
         WeatherK <- apply(WeatherK, 2, scale)
         WeatherK <- WeatherK[,which( !is.na(apply(WeatherK,2,var)) ), drop=FALSE]
         rownames(WeatherK) <- rownamesWeather
+        if(nPC["weather"] < 0){ # do not include extra individuals
+          WeatherK <- WeatherK[which(rownames(WeatherK) %in% unique(phenoDTfile$predictions$environment) ), ]
+        }
         W <- sommer::A.mat(WeatherK)
         W <- W + diag(1e-5, ncol(W), ncol(W))
         Wchol <- t(chol(W))
@@ -102,6 +108,9 @@ metLMMsolver <- function(
                              damCol = paramsPed[paramsPed$parameter=="mother","value"],
                              sireCol = paramsPed[paramsPed$parameter=="father","value"]
         )
+        if(nPC["pedigree"] < 0){ # do not include extra individuals
+          N <- N[which(rownames(N) %in% unique(phenoDTfile$predictions$designation) ), which(rownames(N) %in% unique(phenoDTfile$predictions$designation) ) ]
+        }
         Nchol <- t(chol(N))
         if(nPC["pedigree"] > 0){
           if(verbose){message("   Eigen decomposition of pedigree kernel requested")}
