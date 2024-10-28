@@ -87,7 +87,9 @@ metLMMsolver <- function(
         WeatherK <- WeatherK[,which( !is.na(apply(WeatherK,2,var)) ), drop=FALSE]
         rownames(WeatherK) <- rownamesWeather
         if(nPC["weather"] < 0){ # do not include extra individuals
-          WeatherK <- WeatherK[which(rownames(WeatherK) %in% unique(phenoDTfile$predictions$environment) ), ]
+          mydataX <-  phenoDTfile$predictions[which( phenoDTfile$predictions$analysisId %in% analysisId),]
+          WeatherK <- WeatherK[which(rownames(WeatherK) %in% unique(mydataX$environment) ), ]
+          if(verbose){message(paste("Subsetting weather matrix to",nrow(WeatherK),"environments present"))}
         }
         W <- sommer::A.mat(WeatherK)
         W <- W + diag(1e-5, ncol(W), ncol(W))
@@ -111,7 +113,9 @@ metLMMsolver <- function(
                              sireCol = paramsPed[paramsPed$parameter=="father","value"]
         )
         if(nPC["pedigree"] < 0){ # do not include extra individuals
-          N <- N[which(rownames(N) %in% unique(phenoDTfile$predictions$designation) ), which(rownames(N) %in% unique(phenoDTfile$predictions$designation) ) ]
+          mydataX <-  phenoDTfile$predictions[which( phenoDTfile$predictions$analysisId %in% analysisId),]
+          N <- N[which(rownames(N) %in% unique(mydataX$designation) ), which(rownames(N) %in% unique(mydataX$designation) ) ]
+          if(verbose){message(paste("Subsetting pedigree to",nrow(N),"individuals present"))}
         }
         Nchol <- t(chol(N))
         if(nPC["pedigree"] > 0){
