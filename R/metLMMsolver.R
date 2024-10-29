@@ -21,7 +21,10 @@ metLMMsolver <- function(
   ## CONTROLS FOR MISSPECIFICATION (6 lines)
   if(is.null(phenoDTfile)){stop("Please provide the phenotype file", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the STA analysisId to be analyzed", call. = FALSE)}
-  if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
+  if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}else{
+    baseData <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId ),]
+    if(length(intersect(trait, unique(baseData[,"trait"]))) == 0){stop("The traits you have specified are not present in the analysisId provided.", call. = FALSE)}
+  }
   if(is.null(traitFamily)){traitFamily <- rep("quasi(link = 'identity', variance = 'constant')", length(trait))}
   if(!is.null(randomTerm)){
     randomTerm <- unique(randomTerm)
@@ -53,8 +56,8 @@ metLMMsolver <- function(
       ## MARKER KERNEL
       Markers <- phenoDTfile$data$geno # in form of covariates  
       if("geno" %in% covars & !is.null(Markers)){
-        classify <- randomTermForCovars[which(covars %in% "geno")]
-        if(verbose){message(paste("   Marker kernel for",paste(classify,collapse = ","), "requested"))}
+        classify <- unique(unlist(randomTerm)[which(unlist(expCovariates) %in% "geno")])
+        if(verbose){message(paste("   Marker kernel for",paste(classify,collapse = " and "), "requested"))}
         qas <- which( phenoDTfile$status$module == "qaGeno" ); qas <- qas[length(qas)]
         if(length(qas) > 0){
           modificationsMarkers <- phenoDTfile$modifications$geno[which(phenoDTfile$modifications$geno$analysisId %in% qas),]
@@ -79,8 +82,8 @@ metLMMsolver <- function(
       }
       ## WEATHER KERNEL
       if("weather" %in% covars & !is.null(Weather)){
-        classify <- randomTermForCovars[which(covars %in% "weather")]
-        if(verbose){message(paste("   Weather kernel for",paste(classify,collapse = ","), "requested"))}
+        classify <- unique(unlist(randomTerm)[which(unlist(expCovariates) %in% "weather")])
+        if(verbose){message(paste("   Weather kernel for",paste(classify,collapse = " and "), "requested"))}
         WeatherK <- Weather
         rownamesWeather <- rownames(WeatherK)
         WeatherK <- apply(WeatherK, 2, scale)
@@ -104,8 +107,8 @@ metLMMsolver <- function(
       ## PEDIGREE KERNEL
       Pedigree <- phenoDTfile$data$pedigree
       if("pedigree" %in% covars  &  !is.null(Pedigree)){
-        classify <- randomTermForCovars[which(covars %in% "pedigree")]
-        if(verbose){message(paste("   Pedigree kernel for",paste(classify,collapse = ","), "requested"))}
+        classify <- unique(unlist(randomTerm)[which(unlist(expCovariates) %in% "pedigree")])
+        if(verbose){message(paste("   Pedigree kernel for",paste(classify,collapse = " and "), "requested"))}
         paramsPed <- phenoDTfile$metadata$pedigree
         N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree,
                              indivCol = paramsPed[paramsPed$parameter=="designation","value"],
@@ -126,45 +129,49 @@ metLMMsolver <- function(
         }
       } # now is in the form of covariates
       # TRAIT-BASED KERNEL (ALWAYS ROW-GROUPED BY DESIGNATION)
-      if(any(covars %in% traitsForExpCovariates) ){
+      if( any(covars %in% traitsForExpCovariates) ){
         TraitKernels <- list()
         covarsTraits <- intersect(covars,traitsForExpCovariates)
+        # covarsTraits <- unlist(expCovariates)[which(unlist(expCovariates) %in% comset)]
+        Schol <- list()
         for(iCovar in covarsTraits){ # iCovar = covarsTraits[1] # for each trait specified in covar
-          classify <- unlist(randomTerm)[which(covars == iCovar)] # identify at what levels should the trait be classified
-          if(verbose){message(paste("  ",iCovar,"kernel for",classify, "requested"))}
-          if(classify == "designation"){ # not allowed
-            Schol <- diag(1); rownames(Schol) <- colnames(Schol) <- "A"
-          }else{ 
-            baseData <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId & (phenoDTfile$predictions$trait == iCovar) ),]
-            ww <- as.data.frame(Weather); ww$environment <- rownames(ww)
-            baseData <- merge(baseData, ww, by="environment", all.x = TRUE)
-            if( unlist(lapply(baseData,class))[classify] %in% c("numeric","integer") ){
+          classify <- unlist(randomTerm)[which(unlist(expCovariates) %in% iCovar)] # identify at what levels should the trait be classified
+          for(iClassify in classify){
+            if(verbose){message(paste("  ",iCovar,"kernel for",iClassify, "requested"))}
+            if(iClassify == "designation"){ # not allowed
               Schol <- diag(1); rownames(Schol) <- colnames(Schol) <- "A"
-            }else{ # classify is a character or a factor
-              wideTrait <- reshape(baseData[,c(classify,"designation","predictedValue")], direction = "wide", 
-                                   idvar = "designation", timevar = classify, v.names = "predictedValue", sep= "_")
-              wideTrait <- apply(wideTrait[,-1],2,sommer::imputev)
-              colnames(wideTrait) <- gsub("predictedValue_","",colnames(wideTrait))
-              S <- cov(wideTrait)
-              S <- as.matrix(Matrix::nearPD(x = S, corr = FALSE, 
-                                            keepDiag = FALSE, base.matrix = FALSE, do2eigen = TRUE, 
-                                            doSym = FALSE, doDykstra = TRUE, only.values = FALSE, 
-                                            ensureSymmetry = !isSymmetric(S), eig.tol = 1e-06, 
-                                            conv.tol = 1e-07, posd.tol = 1e-08, maxit = 100, conv.norm.type = "I", 
-                                            trace = FALSE)$mat)
-              Schol <- t(chol(S))
-              if(nPC[iCovar] > 0){
-                if(verbose){message(paste("   Eigen decomposition of",iCovar," classified by",classify, "kernel requested"))}
-                decomp <- RSpectra::svds(Schol, k = min(c(nPC[iCovar], ncol(Schol))), which = "LM")
-                rownames(decomp$u) <- rownames(S); colnames(decomp$u) <- paste0("PC",namesSeq(1:ncol(decomp$u)))
-                Schol <- decomp$u 
+            }else{ 
+              baseData <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId & (phenoDTfile$predictions$trait == iCovar) ),]
+              ww <- as.data.frame(Weather); ww$environment <- rownames(ww)
+              baseData <- merge(baseData, ww, by="environment", all.x = TRUE)
+              if( unlist(lapply(baseData,class))[iClassify] %in% c("numeric","integer") ){
+                Schol <- diag(1); rownames(Schol) <- colnames(Schol) <- "A"
+              }else{ # iClassify is a character or a factor
+                wideTrait <- reshape(baseData[,c(iClassify,"designation","predictedValue")], direction = "wide", 
+                                     idvar = "designation", timevar = iClassify, v.names = "predictedValue", sep= "_")
+                wideTrait <- apply(wideTrait[,-1],2,sommer::imputev)
+                colnames(wideTrait) <- gsub("predictedValue_","",colnames(wideTrait))
+                S <- cov(wideTrait)
+                S <- as.matrix(Matrix::nearPD(x = S, corr = FALSE, 
+                                              keepDiag = FALSE, base.matrix = FALSE, do2eigen = TRUE, 
+                                              doSym = FALSE, doDykstra = TRUE, only.values = FALSE, 
+                                              ensureSymmetry = !isSymmetric(S), eig.tol = 1e-06, 
+                                              conv.tol = 1e-07, posd.tol = 1e-08, maxit = 100, conv.norm.type = "I", 
+                                              trace = FALSE)$mat)
+                Schol <- t(chol(S))
+                if(nPC[iCovar] > 0){
+                  if(verbose){message(paste("   Eigen decomposition of",iCovar," classified by",classify, "kernel requested"))}
+                  decomp <- RSpectra::svds(Schol, k = min(c(nPC[iCovar], ncol(Schol))), which = "LM")
+                  rownames(decomp$u) <- rownames(S); colnames(decomp$u) <- paste0("PC",namesSeq(1:ncol(decomp$u)))
+                  Schol <- decomp$u 
+                }
               }
             }
-          }
-          TraitKernels[[iCovar]][[classify]] <- Schol
-        }
-      }
-    }
+            TraitKernels[[iCovar]][[iClassify]] <- Schol
+          } # end of for each classify
+        } # end of for each iCovar or trait
+      }# end of if statement for a trait-based kernel
+    }# end of if statement for any kernel
   }
   ##########################################
   ##########################################
@@ -240,7 +247,7 @@ metLMMsolver <- function(
               }
             }
           }
-          fixedTermTrait[[iTrait]] <- unique(fixedTermProv)
+          fixedTermTrait[[iTrait]] <- unique(fixedTermProv[which(unlist(lapply(fixedTermProv,length)) > 0)])
           # random formula per trait
           randomTermProv <- randomTerm
           if(!is.null(randomTermProv)){
@@ -422,6 +429,7 @@ metLMMsolver <- function(
       silent = TRUE
     )
     # print(mix$VarDf)
+    pp <- list()
     if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
       ## save the modeling used
       currentModeling <- data.frame(module="mtaLmms", analysisId=mtaAnalysisId,trait=iTrait, environment=c(rep("across",3), names(unlist(entryTypesSub))),
@@ -436,11 +444,10 @@ metLMMsolver <- function(
       # get variance components
       ss <- mix$VarDf;  rownames(ss) <- ss$VarComp
       Ve <- ss["residual","Variance"] 
-      pp <- list()
       mu <- mix$coefMME[mix$ndxCoefficients$`(Intercept)`]
       if(length(mu) > 0){
         pp[["(Intercept)"]] <- data.frame(designation="(Intercept)", predictedValue=mu, stdError=sqrt(as.matrix(solve(mix$C))[1,1]), reliability=NA,
-                                        trait=iTrait, entryType="(Intercept)", environment="(Intercept)" )
+                                          trait=iTrait, entryType="(Intercept)", environment="(Intercept)" )
       }
       fixedEffects <- setdiff(mix$EDdf$Term, mix$VarDf$VarComp)
       fixedEffects <- setdiff(fixedEffects, "(Intercept)")
@@ -452,16 +459,16 @@ metLMMsolver <- function(
         start <- sum(mix$EDdf[1:(which(mix$EDdf$Term == iGroupFixed) - 1),"Model"]) # we don't add a one because we need the intercept
         nEffects <- length(blue)
         pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
-        stdError <- (sqrt(Matrix::diag(pev)))
+        if(is.matrix(pev)){ stdError <- (sqrt(Matrix::diag(pev)))}else{stdError <- pev}
         pp[[iGroupFixed]] <- data.frame(designation=names(blue), predictedValue=blue, stdError=stdError, reliability=NA,
                                         trait=iTrait, entryType=iGroupFixed, environment="(Intercept)" )
       }; 
       if(!is.null(randomTermSub)){
-        for( iGroup in names(groupingSub)){ # iGroup=names(groupingSub)[1]
+        for( iGroup in names(groupingSub)){ # iGroup=names(groupingSub)[2]
           pick <- mix$ndxCoefficients[[iGroup]]
           shouldBeOne <- which(pick == 0)
           if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
-          blup <- (Msub[[iGroup]] %*% mix$coefMME[pick]) + mu; blup <- as.vector(blup)
+          blup <- (Msub[[iGroup]] %*% mix$coefMME[pick]); blup <- as.vector(blup)
           names(blup) <- rownames(Msub[[iGroup]]) # Msub will always be a matrix wither a diagonal or different than but do it across for consistency
           start <- sum(mix$EDdf[1:(which(mix$EDdf$Term == iGroup) - 1),"Model"]) # we don't add a one because we need the intercept
           nEffects <- ncol(Msub[[iGroup]])
@@ -470,21 +477,38 @@ metLMMsolver <- function(
             if(verbose){message(paste("   Calculating standar errors for",iTrait, iGroup,"predictions"))}
             Cinv <- solve(mix$C) 
             Cinv <- Cinv[start:(start+nEffects-1),start:(start+nEffects-1)]
-            Cinv <- as(Cinv, Class = "dgCMatrix")
-            startPev <- seq(1, length(blup), 500)
-            endPev  <- c(startPev - 1, length(blup)); endPev <- endPev[-1]
-            stdError <- list()
-            for(s in 1:length(startPev)){
-              use <- (startPev[s]:endPev[s])
-              stdError[[s]] <-  sqrt(Matrix::diag( Msub[[iGroup]][use,] %*% Matrix::tcrossprod( Cinv, Msub[[iGroup]][use,]) ) ) 
-            }
-            stdError <- unlist(stdError)
+            if(is.matrix(Cinv)){ # when there is more than one effect
+              Cinv <- as(Cinv, Class = "dgCMatrix")
+              startPev <- seq(1, length(blup), 500)
+              endPev  <- c(startPev - 1, length(blup)); endPev <- endPev[-1]
+              stdError <- list()
+              for(s in 1:length(startPev)){
+                use <- (startPev[s]:endPev[s])
+                stdError[[s]] <-  sqrt(Matrix::diag( Msub[[iGroup]][use,] %*% Matrix::tcrossprod( Cinv, Msub[[iGroup]][use,]) ) ) 
+              }
+              stdError <- unlist(stdError)
+            }else{stdError <- Cinv} # random effect was just one column
             reliability <- abs((Vg - (stdError^2)) /Vg) # reliability <- abs((Vg - Matrix::diag(pev))/Vg)
           }else{stdError <- reliability <- rep(NA,length(blup))}
           badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
           badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
           pp[[iGroup]] <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
                                      trait=iTrait, entryType=iGroup , environment=envsSub[[iGroup]] )
+          # add fixed effects if present in the random term
+          feToAdd <- intersect( randomTermSub[[iGroup]], unlist(fixedTermSub) )
+          if(length(feToAdd) > 0){
+            varInppGroup <- strsplit( pp[[iGroup]][,"designation"], ":")
+            for(iFe in feToAdd){ # iFe = feToAdd[1]
+              provFe <- pp[[iFe]]
+              rownames(provFe) <- gsub(paste0(iFe,"_"),"", provFe[,"designation"])
+              pickVarInppGroup <- which(randomTermSub[[iGroup]] == feToAdd)
+              feUsed <- unlist(lapply(varInppGroup, function(x){x[pickVarInppGroup]}))
+              pp[[iGroup]][,"predictedValue"] <-  pp[[iGroup]][,"predictedValue"] + provFe[feUsed,"predictedValue"]
+            }
+          }else{
+            pp[[iGroup]][,"predictedValue"] <-  pp[[iGroup]][,"predictedValue"] + mu
+          }
+          # end of adding fixed effects
           cv <- (sd(blup,na.rm=TRUE)/mean(blup,na.rm=TRUE))*100
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                        data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, 
@@ -501,21 +525,21 @@ metLMMsolver <- function(
                                    data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
                                               parameter=c("Var_residual","nEnv"), method=c("REML","n"), value=c( Ve, length(goodFields) ),stdError=c(NA) )
       )
-      pp <- do.call(rbind,pp)
     }else{ # if model failed
-      if(verbose){ cat(paste("Mixed model failed for this combination. Aggregating and assuming h2 = 0 \n"))}
-      pp <- aggregate(predictedValue ~ designation, FUN=mean, data=mydataSub)
-      pp$environment <- "(Intercept)"
-      pp$stdError <- sd(pp$predictedValue)  
-      pp$reliability <- 1e-6
-      pp$trait <- iTrait
-      cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
+      if(verbose){ cat(paste("Mixed model failed for trait",iTrait,". Aggregating and assuming h2 = 0 \n"))}
+      means <- aggregate(predictedValue ~ designation, FUN=mean, data=mydataSub)
+      means$environment <- "(Intercept)"
+      means$stdError <- sd(means$predictedValue)  
+      means$reliability <- 1e-6
+      means$trait <- iTrait
+      means$entryType <- NA
+      cv <- (sd(means$predictedValue,na.rm=TRUE)/mean(means$predictedValue,na.rm=TRUE))*100
       ## save metrics
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                    data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait=iTrait,
                                               environment="across",
                                               parameter=c("mean","CV", "r2","Var_designation","Var_residual","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML","n"),
-                                              value=c(mean(pp$predictedValue, na.rm=TRUE), cv, NA, NA, NA, length(goodFields) ),
+                                              value=c(mean(means$predictedValue, na.rm=TRUE), cv, NA, NA, NA, length(goodFields) ),
                                               stdError=NA
                                    )
       )
@@ -523,22 +547,24 @@ metLMMsolver <- function(
                                     parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
                                     value=c("None","None","None","mean"))
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
+      pp[["designation"]] <- means
     }
+    pp <- do.call(rbind,pp)
     #######################################
     #######################################
     # add additional entry type labels
-    if(!inherits(mix,"try-error") ){ 
-      mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
-      entryType <- apply(data.frame(pp$designation),1,function(x){
-        found <- which(mydataForEntryType$designation %in% x)
-        if(length(found) > 0){
-          x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-        }else{x2 <- ""}
-        return(x2)
-      })
-      pp$entryType <- ifelse(entryType != "", paste(pp$entryType, entryType, sep = "_"), pp$entryType)
-      predictionsList[[iTrait]] <- pp;
-    }
+    # if(!inherits(mix,"try-error") ){ 
+    mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
+    entryType <- apply(data.frame(pp$designation),1,function(x){
+      found <- which(mydataForEntryType$designation %in% x)
+      if(length(found) > 0){
+        x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
+      }else{x2 <- ""}
+      return(x2)
+    })
+    pp$entryType <- ifelse(entryType != "", paste(pp$entryType, entryType, sep = "_"), pp$entryType)
+    predictionsList[[iTrait]] <- pp;
+    # }
   }
   ## enf of model fitting
   if(length(predictionsList) == 0){stop("There was no predictions to work with. Please look at your H2 boundaries. You may be discarding all envs.",call. = FALSE)}
