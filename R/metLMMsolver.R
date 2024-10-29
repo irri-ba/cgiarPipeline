@@ -464,7 +464,7 @@ metLMMsolver <- function(
                                         trait=iTrait, entryType=iGroupFixed, environment="(Intercept)" )
       }; 
       if(!is.null(randomTermSub)){
-        for( iGroup in names(groupingSub)){ # iGroup=names(groupingSub)[2]
+        for( iGroup in names(groupingSub)){ # iGroup=names(groupingSub)[4]
           pick <- mix$ndxCoefficients[[iGroup]]
           shouldBeOne <- which(pick == 0)
           if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
@@ -495,7 +495,7 @@ metLMMsolver <- function(
           pp[[iGroup]] <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
                                      trait=iTrait, entryType=iGroup , environment=envsSub[[iGroup]] )
           # add fixed effects if present in the random term
-          feToAdd <- intersect( randomTermSub[[iGroup]], unlist(fixedTermSub) )
+          feToAdd <- intersect( randomTermSub[[iGroup]], fixedEffects ) # unlist(fixedTermSub)
           if(length(feToAdd) > 0){
             varInppGroup <- strsplit( pp[[iGroup]][,"designation"], ":")
             for(iFe in feToAdd){ # iFe = feToAdd[1]
