@@ -592,6 +592,12 @@ metLMMsolver <- function(
   ## add which data was used as input
   modeling <- data.frame(module="mtaLmms",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
+  if(!is.null(nPC)){
+    modeling <- rbind(modeling,
+                      data.frame(module="mtaLmms",  analysisId=mtaAnalysisId, trait=names(nPC), environment="general",
+                                 parameter= c("nPC"), value= nPC )
+                      )
+  }
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
