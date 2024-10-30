@@ -509,7 +509,7 @@ metLMMsolver <- function(
             pp[[iGroup]][,"predictedValue"] <-  pp[[iGroup]][,"predictedValue"] + mu
           }
           # end of adding fixed effects
-          cv <- (sd(blup,na.rm=TRUE)/mean(blup,na.rm=TRUE))*100
+          cv <- (sd(pp[[iGroup]][,"predictedValue"],na.rm=TRUE)/mean(pp[[iGroup]][,"predictedValue"],na.rm=TRUE))*100
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                        data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, 
                                                   environment=paste(unique(envsSub[[iGroup]]), collapse = "_"),
