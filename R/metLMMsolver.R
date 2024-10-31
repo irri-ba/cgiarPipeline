@@ -221,7 +221,7 @@ metLMMsolver <- function(
   metrics <- phenoDTfile$metrics
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
   myDataTraits <- fixedTermTrait <- randomTermTrait <- groupingTermTrait <- Mtrait <- envsTrait <- entryTypesTrait <- list()
-  for(iTrait in trait){ # iTrait = trait[3]
+  for(iTrait in trait){ # iTrait = trait[1]
     # filter for records available
     vt <- which(mydata[,"trait"] == iTrait)
     if(length(vt) > 0){ # we have data for the trait
@@ -392,6 +392,7 @@ metLMMsolver <- function(
     envsSub <- envsTrait[[iTrait]] # extract the values for the environment column
     entryTypesSub <- entryTypesTrait[[iTrait]] # extract values for the entryType column (kernels used)
     fixedTermSub <- fixedTermTrait[[iTrait]] # extract fixed formula
+    # names(fixedTermSub) <- unlist(lapply(fixedTermSub,function(x){paste(x,collapse = ":")}))
     randomTermSub <- randomTermTrait[[iTrait]] # extract random formula
     ## deregress if needed
     VarFull <- var(mydataSub[,"predictedValue"], na.rm = TRUE) # total variance
@@ -453,20 +454,37 @@ metLMMsolver <- function(
       }
       fixedEffects <- setdiff(mix$EDdf$Term, mix$VarDf$VarComp)
       fixedEffects <- setdiff(fixedEffects, "(Intercept)")
-      for(iGroupFixed in fixedEffects){ # iGroupFixed = fixedEffects[1]
+      for(iGroupFixed in fixedEffects){ # iGroupFixed = fixedEffects[2]
         pick <- mix$ndxCoefficients[[iGroupFixed]]
-        shouldBeOne <- which(pick == 0)
-        if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
+        pick <- pick[which(pick!=0)]
+        # shouldBeOne <- which(pick == 0)
+        # if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
         blue <- mix$coefMME[pick] + mu; names(blue) <- names(pick); blue[1] <- blue[1]-mu
         start <- sum(mix$EDdf[1:(which(mix$EDdf$Term == iGroupFixed) - 1),"Model"]) # we don't add a one because we need the intercept
-        nEffects <- length(blue)
+        nEffects <- mix$EDdf[which(mix$EDdf$Term == iGroupFixed),"Effective"]#length(blue)
         pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
         if(is.matrix(pev)){ stdError <- (sqrt(Matrix::diag(pev)))}else{stdError <- pev}
-        pp[[iGroupFixed]] <- data.frame(designation=names(blue), predictedValue=blue, stdError=stdError, reliability=NA,
-                                        trait=iTrait, entryType=iGroupFixed, environment="(Intercept)" )
+        prov <- data.frame(designation=names(blue), predictedValue=blue, stdError=stdError, reliability=NA,
+                           trait=iTrait, entryType=iGroupFixed, environment="(Intercept)" )
+        for(iLabel in unique(unlist(fixedTermSub))){
+          prov$designation <- gsub(paste0(iLabel,"_"),"",prov$designation)
+        }
+        # add additional entry type labels
+        mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(strsplit(iGroupFixed,":")),drop=FALSE],1,function(x){paste(x,collapse = ":")})
+        entryType <- apply(data.frame(prov$designation),1,function(x){
+          found <- which(mydataSub[,"designationXXX"] %in% x)
+          if(length(found) > 0){
+            x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+          }else{x2 <- ""}
+          return(x2)
+        })
+        prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
+        
+        # save
+        pp[[iGroupFixed]] <- prov
       };
       if(!is.null(randomTermSub)){
-        for( iGroup in names(groupingSub)){ # iGroup=names(groupingSub)[4]
+        for( iGroup in names(groupingSub)){ # iGroup=names(groupingSub)[2]
           pick <- mix$ndxCoefficients[[iGroup]]
           shouldBeOne <- which(pick == 0)
           if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
@@ -494,24 +512,36 @@ metLMMsolver <- function(
           }else{stdError <- reliability <- rep(NA,length(blup))}
           badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
           badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
-          pp[[iGroup]] <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
+          prov <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
                                      trait=iTrait, entryType=iGroup , environment=envsSub[[iGroup]] )
           # add fixed effects if present in the random term
           feToAdd <- intersect( randomTermSub[[iGroup]], fixedEffects ) # unlist(fixedTermSub)
           if(length(feToAdd) > 0){
-            varInppGroup <- strsplit( pp[[iGroup]][,"designation"], ":")
+            varInppGroup <- strsplit( prov[,"designation"], ":")
             for(iFe in feToAdd){ # iFe = feToAdd[1]
               provFe <- pp[[iFe]]
               rownames(provFe) <- gsub(paste0(iFe,"_"),"", provFe[,"designation"])
               pickVarInppGroup <- which(randomTermSub[[iGroup]] == feToAdd)
               feUsed <- unlist(lapply(varInppGroup, function(x){x[pickVarInppGroup]}))
-              pp[[iGroup]][,"predictedValue"] <-  pp[[iGroup]][,"predictedValue"] + provFe[feUsed,"predictedValue"]
+              prov[,"predictedValue"] <-  prov[,"predictedValue"] + provFe[feUsed,"predictedValue"]
             }
           }else{
-            pp[[iGroup]][,"predictedValue"] <-  pp[[iGroup]][,"predictedValue"] + mu
+            prov[,"predictedValue"] <-  prov[,"predictedValue"] + mu
           }
           # end of adding fixed effects
-          cv <- (sd(pp[[iGroup]][,"predictedValue"],na.rm=TRUE)/mean(pp[[iGroup]][,"predictedValue"],na.rm=TRUE))*100
+          cv <- (sd(prov[,"predictedValue"],na.rm=TRUE)/mean(prov[,"predictedValue"],na.rm=TRUE))*100
+          # add additional entry type labels
+          mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(randomTermSub[[iGroup]]),drop=FALSE],1,function(x){paste(x,collapse = ":")})
+          entryType <- apply(data.frame(prov$designation),1,function(x){
+            found <- which(mydataSub[,"designationXXX"] %in% x)
+            if(length(found) > 0){
+              x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+            }else{x2 <- ""}
+            return(x2)
+          })
+          prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
+          # save
+          pp[[iGroup]] <- prov
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                        data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait,
                                                   environment=paste(unique(envsSub[[iGroup]]), collapse = "_"),
@@ -551,22 +581,7 @@ metLMMsolver <- function(
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
       pp[["designation"]] <- means
     }
-    pp <- do.call(rbind,pp)
-    #######################################
-    #######################################
-    # add additional entry type labels
-    # if(!inherits(mix,"try-error") ){
-    mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
-    entryType <- apply(data.frame(pp$designation),1,function(x){
-      found <- which(mydataForEntryType$designation %in% x)
-      if(length(found) > 0){
-        x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-      }else{x2 <- ""}
-      return(x2)
-    })
-    pp$entryType <- ifelse(entryType != "", paste(pp$entryType, entryType, sep = "_"), pp$entryType)
-    predictionsList[[iTrait]] <- pp;
-    # }
+    predictionsList[[iTrait]] <- do.call(rbind,pp)
   }
   ## enf of model fitting
   if(length(predictionsList) == 0){stop("There was no predictions to work with. Please look at your H2 boundaries. You may be discarding all envs.",call. = FALSE)}
