@@ -459,7 +459,7 @@ metLMMsolver <- function(
         pick <- pick[which(pick!=0)]
         # shouldBeOne <- which(pick == 0)
         # if(length(shouldBeOne) > 0){pick[shouldBeOne] = 1}
-        blue <- mix$coefMME[pick] + mu; names(blue) <- names(pick); blue[1] <- blue[1]-mu
+        blue <- mix$coefMME[pick] + mu; names(blue) <- names(pick); #blue[1] <- blue[1]-mu
         start <- sum(mix$EDdf[1:(which(mix$EDdf$Term == iGroupFixed) - 1),"Model"]) # we don't add a one because we need the intercept
         nEffects <- mix$EDdf[which(mix$EDdf$Term == iGroupFixed),"Effective"]#length(blue)
         pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
