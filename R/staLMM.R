@@ -19,7 +19,7 @@ staLMM <- function(
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
   names(traitFamily) <- trait
   # fixedTerm <- unique(c("1",fixedTerm,"designation"))
-  fixedTerm <- unique(c("1", genoUnit))
+  fixedTerm <- unique(c("1", fixedTerm, genoUnit))
   
   '%!in%' <- function(x,y)!('%in%'(x,y))
   if(is.null(phenoDTfile$metrics)){
@@ -146,7 +146,7 @@ staLMM <- function(
   }
   predictionsList <- list(); columnsToAdd <- character(); counter=1
   library(LMMsolver)
-  for(iTrait in trait){ # iTrait=trait[5]
+  for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     mydata[,paste(iTrait,"residual",sep="-")] <- NA
     
@@ -273,13 +273,14 @@ staLMM <- function(
                   ranran <- paste("~",paste(c(newRanran), collapse=" + "))
                   if(ranran=="~ "){randomFormulaForFixedModel=NULL}else{randomFormulaForFixedModel <- as.formula(ranran)}
                   rownames(sm) <- NULL
-                  if(verbose){
-                    print(sm)
-                    cat(paste(iTrait," ~",paste(iGenoUnit, collapse = " + ")," \n"))
-                    cat(paste(randomFormulaForFixedModel,"\n"))
-                  }
+                  
                   otherFixed <- setdiff(fixedTermTraitField,genoUnitTraitField)
                   fixedFormulaForFixedModel <- paste("trait ~",paste(c(iGenoUnit,otherFixed), collapse = " + "))
+                  if(verbose){
+                    print(sm)
+                    cat(paste(fixedFormulaForFixedModel, "\n"))
+                    cat(paste(randomFormulaForFixedModel,"\n"))
+                  }
                   mixFixed <- try( # second model with genotype as fixed
                     LMMsolver::LMMsolve(fixed =as.formula(fixedFormulaForFixedModel),
                                         random = randomFormulaForFixedModel,
