@@ -523,7 +523,8 @@ metLMMsolver <- function(
               rownames(provFe) <- gsub(paste0(iFe,"_"),"", provFe[,"designation"])
               pickVarInppGroup <- which(randomTermSub[[iGroup]] == feToAdd)
               feUsed <- unlist(lapply(varInppGroup, function(x){x[pickVarInppGroup]}))
-              prov[,"predictedValue"] <-  prov[,"predictedValue"] + provFe[feUsed,"predictedValue"]
+              mu0 <- provFe[feUsed,"predictedValue"]; mu0[which(is.na(mu0))]=0
+              prov[,"predictedValue"] <-  prov[,"predictedValue"] + mu0
             }
           }else{
             prov[,"predictedValue"] <-  prov[,"predictedValue"] + mu
