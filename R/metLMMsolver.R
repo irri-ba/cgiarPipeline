@@ -471,14 +471,14 @@ metLMMsolver <- function(
         }
         # add additional entry type labels
         mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(strsplit(iGroupFixed,":")),drop=FALSE],1,function(x){paste(x,collapse = ":")})
-        entryType <- apply(data.frame(prov$designation),1,function(x){
-          found <- which(mydataSub[,"designationXXX"] %in% x)
-          if(length(found) > 0){
-            x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-          }else{x2 <- ""}
-          return(x2)
-        })
-        prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
+        # entryType <- apply(data.frame(prov$designation),1,function(x){
+        #   found <- which(mydataSub[,"designationXXX"] %in% x)
+        #   if(length(found) > 0){
+        #     x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+        #   }else{x2 <- ""}
+        #   return(x2)
+        # })
+        # prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
         
         # save
         pp[[iGroupFixed]] <- prov
@@ -532,15 +532,15 @@ metLMMsolver <- function(
           # end of adding fixed effects
           cv <- (sd(prov[,"predictedValue"],na.rm=TRUE)/mean(prov[,"predictedValue"],na.rm=TRUE))*100
           # add additional entry type labels
-          mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(randomTermSub[[iGroup]]),drop=FALSE],1,function(x){paste(x,collapse = ":")})
-          entryType <- apply(data.frame(prov$designation),1,function(x){
-            found <- which(mydataSub[,"designationXXX"] %in% x)
-            if(length(found) > 0){
-              x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-            }else{x2 <- ""}
-            return(x2)
-          })
-          prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
+          # mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(randomTermSub[[iGroup]]),drop=FALSE],1,function(x){paste(x,collapse = ":")})
+          # entryType <- apply(data.frame(prov$designation),1,function(x){
+          #   found <- which(mydataSub[,"designationXXX"] %in% x)
+          #   if(length(found) > 0){
+          #     x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+          #   }else{x2 <- ""}
+          #   return(x2)
+          # })
+          # prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
           # save
           pp[[iGroup]] <- prov
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
