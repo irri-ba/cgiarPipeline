@@ -3,6 +3,7 @@ indexDesire <- function(
     analysisId=NULL, # analysis to be picked from predictions database
     environmentToUse=NULL,
     entryTypeToUse=NULL,
+    effectTypeToUse=NULL,
     trait= NULL, # traits to include in the index
     desirev = NULL, # vector of desired values
     scaled=TRUE, # whether predicted values should be scaled or not
@@ -21,14 +22,22 @@ indexDesire <- function(
   names(desirev) <- trait
   ############################
   # loading the dataset
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+    phenoDTfile$predictions$effectType <- NA
+  }
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]
-
   if(is.null(environmentToUse)){ environmentToUse <- names(sort(table(mydata$environment)))}
   mydata <- mydata[which(mydata$environment %in% environmentToUse),]
   if(!is.null(entryTypeToUse)){
     if(length(setdiff(entryTypeToUse,"")) > 0){
       mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+    }
+  }
+  if(!is.null(effectTypeToUse)){
+    if(length(setdiff(effectTypeToUse,"")) > 0){
+      mydata <- mydata[which(mydata$effectType %in% effectTypeToUse),]
     }
   }
   trait <- intersect(trait, unique(mydata$trait))
@@ -72,7 +81,8 @@ indexDesire <- function(
     out3 <- (sort(mydata[which(mydata$designation %in% x),"father"], decreasing = FALSE))[1]
     out4 <- paste(unique(sort(mydata[which(mydata$designation %in% x),"pipeline"], decreasing = FALSE)),collapse=", ")
     out5 <- paste(unique(sort(mydata[which(mydata$designation %in% x),"entryType"], decreasing = FALSE)),collapse=", ")
-    y <- data.frame(designation=x,gid=out1,mother=out2,father=out3,pipeline=out4, entryType=out5)
+    out6 <- paste(unique(sort(mydata[which(mydata$designation %in% x),"effectType"], decreasing = FALSE)),collapse=", ")
+    y <- data.frame(designation=x,gid=out1,mother=out2,father=out3,pipeline=out4, entryType=out5, effectType=out6)
     return(y)
   }))
   predictionsBind <- merge(newped,baseOrigin, by="designation", all.x=TRUE)

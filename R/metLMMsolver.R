@@ -450,7 +450,7 @@ metLMMsolver <- function(
       mu <- mix$coefMME[mix$ndxCoefficients$`(Intercept)`]
       if(length(mu) > 0){
         pp[["(Intercept)"]] <- data.frame(designation="(Intercept)", predictedValue=mu, stdError=sqrt(as.matrix(solve(mix$C))[1,1]), reliability=NA,
-                                          trait=iTrait, entryType="(Intercept)", environment="(Intercept)" )
+                                          trait=iTrait, effectType="(Intercept)", entryType=NA, environment="(Intercept)" )
       }
       fixedEffects <- setdiff(mix$EDdf$Term, mix$VarDf$VarComp)
       fixedEffects <- setdiff(fixedEffects, "(Intercept)")
@@ -465,21 +465,20 @@ metLMMsolver <- function(
         pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
         if(is.matrix(pev)){ stdError <- (sqrt(Matrix::diag(pev)))}else{stdError <- pev}
         prov <- data.frame(designation=names(blue), predictedValue=blue, stdError=stdError, reliability=NA,
-                           trait=iTrait, entryType=iGroupFixed, environment="(Intercept)" )
+                           trait=iTrait, effectType=iGroupFixed, environment="(Intercept)" )
         for(iLabel in unique(unlist(fixedTermSub))){
           prov$designation <- gsub(paste0(iLabel,"_"),"",prov$designation)
         }
         # add additional entry type labels
         mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(strsplit(iGroupFixed,":")),drop=FALSE],1,function(x){paste(x,collapse = ":")})
-        # entryType <- apply(data.frame(prov$designation),1,function(x){
-        #   found <- which(mydataSub[,"designationXXX"] %in% x)
-        #   if(length(found) > 0){
-        #     x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-        #   }else{x2 <- ""}
-        #   return(x2)
-        # })
-        # prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
-        
+        prov$entryType <- apply(data.frame(prov$designation),1,function(x){
+          found <- which(mydataSub[,"designationXXX"] %in% x)
+          if(length(found) > 0){
+            x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+          }else{x2 <- ""}
+          return(x2)
+        })
+
         # save
         pp[[iGroupFixed]] <- prov
       };
@@ -513,7 +512,7 @@ metLMMsolver <- function(
           badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
           badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
           prov <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
-                                     trait=iTrait, entryType=iGroup , environment=envsSub[[iGroup]] )
+                                     trait=iTrait, effectType=iGroup , environment=envsSub[[iGroup]] )
           # add fixed effects if present in the random term
           feToAdd <- intersect( randomTermSub[[iGroup]], fixedEffects ) # unlist(fixedTermSub)
           if(length(feToAdd) > 0){
@@ -532,15 +531,14 @@ metLMMsolver <- function(
           # end of adding fixed effects
           cv <- (sd(prov[,"predictedValue"],na.rm=TRUE)/mean(prov[,"predictedValue"],na.rm=TRUE))*100
           # add additional entry type labels
-          # mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(randomTermSub[[iGroup]]),drop=FALSE],1,function(x){paste(x,collapse = ":")})
-          # entryType <- apply(data.frame(prov$designation),1,function(x){
-          #   found <- which(mydataSub[,"designationXXX"] %in% x)
-          #   if(length(found) > 0){
-          #     x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-          #   }else{x2 <- ""}
-          #   return(x2)
-          # })
-          # prov$entryType <- ifelse(entryType != "", paste(prov$entryType, entryType, sep = "_"), prov$entryType)
+          mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(randomTermSub[[iGroup]]),drop=FALSE],1,function(x){paste(x,collapse = ":")})
+          prov$entryType <- apply(data.frame(prov$designation),1,function(x){
+            found <- which(mydataSub[,"designationXXX"] %in% x)
+            if(length(found) > 0){
+              x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+            }else{x2 <- ""}
+            return(x2)
+          })
           # save
           pp[[iGroup]] <- prov
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
@@ -565,6 +563,7 @@ metLMMsolver <- function(
       means$stdError <- sd(means$predictedValue)
       means$reliability <- 1e-6
       means$trait <- iTrait
+      means$effectType <- "designation"
       means$entryType <- NA
       cv <- (sd(means$predictedValue,na.rm=TRUE)/mean(means$predictedValue,na.rm=TRUE))*100
       ## save metrics
@@ -602,8 +601,13 @@ metLMMsolver <- function(
   }))
   predictionsBind <- merge(predictionsBind,baseOrigin, by="designation", all.x=TRUE)
   predictionsBind$module <- "mtaLmms"; rownames(predictionsBind) <- NULL
+  # print(head(predictionsBind))
   #########################################
   ## update databases
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+    phenoDTfile$predictions$effectType <- NA
+  }
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mtaLmms", analysisId=mtaAnalysisId))

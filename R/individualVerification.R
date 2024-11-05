@@ -1,19 +1,23 @@
 
-individualVerification <- function( 
+individualVerification <- function(
   object= NULL,
   analysisIdForGenoModifications= NULL,
   markersToBeUsed=NULL,
   colsForExpecGeno=NULL, ploidy=2,
   onlyMats=FALSE
 ){
-  
+
   analysisId <- as.numeric(Sys.time())
   ############################
   # loading the dataset
   if (is.null(object)) stop("No input file specified.")
   if (is.null(analysisIdForGenoModifications)) stop("No geno clean file specified.")
   if (is.null(colsForExpecGeno)){colsForExpecGeno <- "designation"}
-  
+
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if("effectType" %!in% colnames(object$predictions) ){
+    object$predictions$effectType <- NA
+  }
   # get markers
   Markers <- object$data$geno
   if(is.null(Markers)){stop("This function requires your object to have marker information.", call. = FALSE)}
@@ -35,7 +39,7 @@ individualVerification <- function(
   colsForExpecGeno <- cgiarBase::replaceValues(colsForExpecGeno, Search = metaPed$value, Replace = metaPed$parameter )
   cross <- unique(ped[,c("mother","father","designation")]); colnames(cross) <- c("Var1","Var2","hybrid")
   cross <- cross[which(!duplicated(cross$hybrid)),]
-  
+
   # controls
   if( any( c(sommer::propMissing(cross$Var1), sommer::propMissing(cross$Var2)) == 1 ) ){
     stop("You have too many fathers or mothers missing in the pedigree. Please correct your file", call. = FALSE)
@@ -75,8 +79,8 @@ individualVerification <- function(
   }
   Mexpec <- Mexpec/length(colsForExpecGeno)
   ## calculate metrics
-  
-  res <- cgiarBase::crossVerification(Mf=Mfem,Mm=Mmal,Mp=Mpro, 
+
+  res <- cgiarBase::crossVerification(Mf=Mfem,Mm=Mmal,Mp=Mpro,
                                 Mexp=Mexpec,
                                 ploidy=ploidy)
   if(onlyMats){
@@ -87,7 +91,7 @@ individualVerification <- function(
   object$status <- rbind( object$status, data.frame(module="gVerif", analysisId=analysisId))
   ## modeling
   modeling <- data.frame(module="gVerif",  analysisId=analysisId, trait=c(rep("none",length(colsForExpecGeno)+length(markersToBeUsed) ),"inputObject"), environment="general",
-                         parameter= c(rep("expectedGenoColumn",length(colsForExpecGeno)), rep("markerUsed",length(markersToBeUsed)), "analysisId"  ), 
+                         parameter= c(rep("expectedGenoColumn",length(colsForExpecGeno)), rep("markerUsed",length(markersToBeUsed)), "analysisId"  ),
                          value= c(colsForExpecGeno, markersToBeUsed,analysisIdForGenoModifications ))
   if(is.null(object$modeling)){
     object$modeling <-  modeling
@@ -100,12 +104,12 @@ individualVerification <- function(
   monomorphicMarkersN = length(which(apply(Mpro,2,var,na.rm=TRUE)==0))
   polymorphicMarkersN = nMarkers - monomorphicMarkersN
   indivMatchedN = length(which(res$metricsInd$probMatch == 1))
-  indivUnmatchedN = nInds - indivMatchedN 
+  indivUnmatchedN = nInds - indivMatchedN
   object$metrics <- rbind(object$metrics,
                                data.frame(module="gVerif",analysisId=analysisId, trait="none", environment="general",
-                                          parameter= c("nMarkers","nInds", "monomorphicMarkersN","polymorphicMarkersN","indivMatchedN","indivUnmatchedN"), 
-                                          method= c("sum","sum","sum","sum","sum","sum"), 
-                                          value=c(nMarkers, nInds, monomorphicMarkersN,polymorphicMarkersN,indivMatchedN, indivUnmatchedN ), 
+                                          parameter= c("nMarkers","nInds", "monomorphicMarkersN","polymorphicMarkersN","indivMatchedN","indivUnmatchedN"),
+                                          method= c("sum","sum","sum","sum","sum","sum"),
+                                          value=c(nMarkers, nInds, monomorphicMarkersN,polymorphicMarkersN,indivMatchedN, indivUnmatchedN ),
                                           stdError= NA
                                )
   )
@@ -115,11 +119,11 @@ individualVerification <- function(
           v.names = "predictedValue", direction = "long", times = colnames(res$metricsInd)[-c(1)]
           )
   pp <- merge(pp,cross, by.x = "designation", by.y="hybrid", all.x = TRUE)
-  
+
   preds <- data.frame(module="gVerif",  analysisId=analysisId, pipeline= "unknown",
              trait=pp$time, gid=1:nrow(pp), designation=pp$designation,
-             mother=pp$Var1,father=pp$Var2, entryType="test",
-             environment="across", predictedValue=pp$predictedValue, stdError=NA, 
+             mother=pp$Var1,father=pp$Var2, entryType="test", effectType="designation",
+             environment="across", predictedValue=pp$predictedValue, stdError=NA,
              reliability=NA
   )
   if(is.null(object$predictions)){
@@ -127,7 +131,7 @@ individualVerification <- function(
   }else{
     object$predictions <- rbind(object$predictions, preds[, colnames(object$predictions)])
   }
-  
+
   return(object)
   }
 }

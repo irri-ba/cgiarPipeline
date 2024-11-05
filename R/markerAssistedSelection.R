@@ -1,18 +1,21 @@
 
-markerAssistedSelection <- function( 
+markerAssistedSelection <- function(
     object= NULL,
     analysisIdForGenoModifications= NULL,
     markersToBeUsed=NULL,
     positiveAlleles=NULL,
     desire=NULL, ploidy=2
 ){
-  
+
   analysisId <- as.numeric(Sys.time())
   ############################
   # loading the dataset
   if (is.null(object)) stop("No input file specified.")
   if (is.null(analysisIdForGenoModifications)) stop("No geno clean file specified.")
-  
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if("effectType" %!in% colnames(object$predictions) ){
+    object$predictions$effectType <- NA
+  }
   # get markers
   Markers <- object$data$geno
   if(is.null(Markers)){stop("This function requires your object to have marker information.", call. = FALSE)}
@@ -44,7 +47,7 @@ markerAssistedSelection <- function(
     for(k in 1:ncol(Markers)){
       ttb <- table(0:ploidy)-1 # table of zeros for dosages
       tto <- table(Markers[,k])
-      ttb[names(tto)] <- ttb[names(tto)] + tto 
+      ttb[names(tto)] <- ttb[names(tto)] + tto
       n <- sum(ttb)
       p[k] <- ( ifelse(positiveAllelesN[k]==0, ttb[1],ttb[length(ttb)]) + (ttb[2:(length(ttb)-1)] / factorial(2:(length(ttb)-1)) ) ) / n
     }
@@ -55,27 +58,27 @@ markerAssistedSelection <- function(
     for(k in 1:ncol(Markers)){
       ttb <- table(0:ploidy)-1 # table of zeros for dosages
       tto <- table(Markers[,k])
-      ttb[names(tto)] <- ttb[names(tto)] + tto 
+      ttb[names(tto)] <- ttb[names(tto)] + tto
       n <- sum(ttb)
       p[k] <- ( ifelse(positiveAllelesN[k]==0, ttb[1],ttb[length(ttb)]) + (ttb[2:(length(ttb)-1)] / factorial(2:(length(ttb)-1)) ) ) / n
     }
     desire <- (1 - p)*desire # distance to fixation
     # }
   }
-  
+
   G <- cov(Markers)
   Gi <- solve(G + diag(1e-6,ncol(G),ncol(G)))
-  
+
   w <- Gi %*% desire
-  
+
   merit <- Markers %*% w
-  
+
   ###############
   # other tables
   object$status <- rbind( object$status, data.frame(module="mas", analysisId=analysisId))
   ## modeling
   modeling <- data.frame(module="mas",  analysisId=analysisId, trait=c(markersToBeUsed,markersToBeUsed,"inputObject"), environment="across",
-                         parameter= c(rep("markerUsed",length(markersToBeUsed)),rep("desire", length(markersToBeUsed)), "analysisId"  ), 
+                         parameter= c(rep("markerUsed",length(markersToBeUsed)),rep("desire", length(markersToBeUsed)), "analysisId"  ),
                          value= c(markersToBeUsed,round(desire,6),ifelse(is.null(analysisIdForGenoModifications),NA,analysisIdForGenoModifications))
   )
   if(is.null(object$modeling)){
@@ -87,8 +90,8 @@ markerAssistedSelection <- function(
   ## predictions
   preds <- data.frame(module="mas",  analysisId=analysisId, pipeline= "unknown",
                       trait="masMerit", gid=1:nrow(Markers), designation=rownames(Markers),
-                      mother=NA,father=NA, entryType="test_entry",
-                      environment="across", predictedValue=as.numeric(merit), stdError=NA, 
+                      mother=NA,father=NA, entryType="test_entry", effectType="designation",
+                      environment="across", predictedValue=as.numeric(merit), stdError=NA,
                       reliability=NA
   )
   if(is.null(object$predictions)){
@@ -96,9 +99,9 @@ markerAssistedSelection <- function(
   }else{
     object$predictions <- rbind(object$predictions, preds[, colnames(object$predictions)])
   }
-  
+
   return(object)
-  
+
 }
 
 

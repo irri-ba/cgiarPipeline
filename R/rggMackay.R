@@ -6,6 +6,7 @@ rggMackay <- function(
     partition=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
+    effectTypeToUse=NULL,
     verbose=TRUE,
     forceRules=TRUE,
     propTopIndsPerYear=1 # by default we pick all inds per year
@@ -20,6 +21,10 @@ rggMackay <- function(
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   ############################
   # loading the dataset
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+    phenoDTfile$predictions$effectType <- NA
+  }
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
@@ -38,6 +43,10 @@ rggMackay <- function(
   if(!is.null(entryTypeToUse)){ # reduce the dataset by entry types selected
     entryTypeToUse <- as.character(entryTypeToUse)
     mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+  }
+  if(!is.null(effectTypeToUse)){ # reduce the dataset by entry types selected
+    effectTypeToUse <- as.character(effectTypeToUse)
+    mydata <- mydata[which(mydata$effectType %in% effectTypeToUse),]
   }
   # reduce dataset by top entries selected
   if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter. Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section.",call. = FALSE)}
@@ -142,7 +151,7 @@ rggMackay <- function(
               }
             }
           }
-          gg <- median(p1, na.rm=TRUE); ggPercentage <- median(p2, na.rm=TRUE); ggPercentageAverageYear <- median(p2b, na.rm=TRUE); 
+          gg <- median(p1, na.rm=TRUE); ggPercentage <- median(p2, na.rm=TRUE); ggPercentageAverageYear <- median(p2b, na.rm=TRUE);
           seGgPercentage <- median(p3, na.rm=TRUE); seGgPercentageAverageYear <- median(p3b, na.rm=TRUE)
           inter <- median(p4, na.rm=TRUE); seb1 <- median(p5, na.rm=TRUE); seb0<- median(p6, na.rm=TRUE)
           r2 <- median(p7, na.rm=TRUE); pv <- median(p8, na.rm=TRUE)

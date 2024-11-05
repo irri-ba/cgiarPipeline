@@ -4,6 +4,7 @@ rggPiepho <- function(
     trait=NULL, # per trait
     yearsToUse=NULL,
     entryTypeToUse=NULL,
+    effectTypeToUse=NULL,
     verbose=TRUE,
     traitFamily=NULL,
     sampleN=50, # max number of individuals per environment to sample
@@ -23,6 +24,10 @@ rggPiepho <- function(
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   ############################
   # loading the dataset
+  '%!in%' <- function(x,y)!('%in%'(x,y))
+  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+    phenoDTfile$predictions$effectType <- NA
+  }
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
@@ -36,7 +41,7 @@ rggPiepho <- function(
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
   # add the other available columns to the dataset
   metaPheno <- phenoDTfile$metadata$pheno[which(phenoDTfile$metadata$pheno$parameter %in% c("environment","year","season","country","location","trial")),]
-  
+
   otherMetaCols <- unique(phenoDTfile$data$pheno[,metaPheno$value,drop=FALSE])
   colnames(otherMetaCols) <- cgiarBase::replaceValues(Source = colnames(otherMetaCols), Search = metaPheno$value, Replace = metaPheno$parameter )
   otherMetaCols <- otherMetaCols[which(!duplicated(otherMetaCols[,"environment"])),,drop=FALSE] # we do this in case the users didn't define the environment properly
@@ -50,8 +55,12 @@ rggPiepho <- function(
     entryTypeToUse <- as.character(entryTypeToUse)
     mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
   }
+  if(!is.null(effectTypeToUse)){ # reduce the dataset
+    effectTypeToUse <- as.character(effectTypeToUse)
+    mydata <- mydata[which(mydata$effectType %in% effectTypeToUse),]
+  }
   if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter. Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section.",call. = FALSE)}
-  
+
   if(forceRules){ # if we enforce ABI rules for minimum years of data
     if(length(unique(na.omit(mydata[,fixedTerm]))) <= 5){stop("Less than 5 years of data have been detected. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
   }else{
@@ -98,7 +107,7 @@ rggPiepho <- function(
       ll <- split(mydataSub, mydataSub$environment)
       ll <- lapply(ll, function(x){y <- x[sample(1:nrow(x), min(c(nrow(x), sampleN)) ),]; return(y)})
       mydataSub2 <- do.call(rbind, ll)
-      
+
       # do analysis
       if(!is.na(var(mydataSub2[,"predictedValue"],na.rm=TRUE))){ # if there's variance
         if( var(mydataSub2[,"predictedValue"], na.rm = TRUE) > 0 ){
@@ -128,7 +137,7 @@ rggPiepho <- function(
           }else{
             fix <- paste("predictedValue ~ yearOfOrigin + environment")
           }
-          
+
           random <- "~designation + designationEnvironment"
           ranres <- "~units"#"~dsum(~units | environment)"
           mydataSub2=mydataSub2[with(mydataSub2, order(environment)), ]
@@ -165,7 +174,7 @@ rggPiepho <- function(
           }
           r2 <- NA # sm$r.squared
           pv <- NA# 1 - pf(sm$fstatistic[1], df1=sm$fstatistic[2], df2=sm$fstatistic[3])
-          
+
           gg.y1<- sort(unique(mydataSub2[,fixedTerm]), decreasing = FALSE)[1]
           gg.yn <- sort(unique(mydataSub2[,fixedTerm]), decreasing = TRUE)[1]
           ntrial <- phenoDTfile$metrics
@@ -179,7 +188,7 @@ rggPiepho <- function(
     }
     # save the modeling table
     currentModeling <- data.frame(module="rgg", analysisId=rggAnalysisId,trait=iTrait, environment="across",
-                                  parameter=c("deregression","fixedFormula","randomFormula","residualFormula","family"), 
+                                  parameter=c("deregression","fixedFormula","randomFormula","residualFormula","family"),
                                   value=c(deregress, fix, random,"~units", traitFamily[iTrait]))
     phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
     # save parameters
@@ -187,18 +196,18 @@ rggPiepho <- function(
     stdError <- apply(do.call(rbind, stdError),2, function(x){median(x, na.rm=TRUE)})
     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                  data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment=c(rep("across",9), mixCoeff$year$coef),
-                                            parameter=c("ggSlope","ggInter", "gg%(first.year)","gg%(average.year)","r2","pVal","nTrial","initialYear","lastYear",rep("nonGeneticTrend",length(mixCoeff$year$coef) )), 
+                                            parameter=c("ggSlope","ggInter", "gg%(first.year)","gg%(average.year)","r2","pVal","nTrial","initialYear","lastYear",rep("nonGeneticTrend",length(mixCoeff$year$coef) )),
                                             method=ifelse(deregress,"piephoDeregress","piepho"),
                                             value=val, stdError=stdError
                                  )
     )
     myPreds <- data.frame(module = "rgg", analysisId = rggAnalysisId, pipeline = NA, trait = iTrait,
                gid = NA, designation = gsub("designation_","",mixCoeff$designation$coef),
-               mother = NA, father = NA, entryType = NA,
+               mother = NA, father = NA, entryType = NA, effectType=NA,
                environment = "across", predictedValue = mixCoeff$designation$value + baseline,
                stdError = mixCoeff$designation$se, reliability = NA)
-    phenoDTfile$predictions <- rbind(phenoDTfile$predictions, myPreds)
-    
+    phenoDTfile$predictions <- rbind(phenoDTfile$predictions, myPreds[,colnames(phenoDTfile$predictions)])
+
   }
   #########################################
   ## update databases
