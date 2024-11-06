@@ -17,7 +17,7 @@ baseIndex <- function(
   weights <- as.numeric(weights)
   '%!in%' <- function(x,y)!('%in%'(x,y))
   if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- NA
+    phenoDTfile$predictions$effectType <- "general"
   }
   phenoDTfilePred <- phenoDTfile$predictions
   phenoDTfilePred <- phenoDTfilePred[phenoDTfilePred$analysisId==analysisId,]

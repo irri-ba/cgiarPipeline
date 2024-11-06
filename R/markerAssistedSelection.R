@@ -14,7 +14,7 @@ markerAssistedSelection <- function(
   if (is.null(analysisIdForGenoModifications)) stop("No geno clean file specified.")
   '%!in%' <- function(x,y)!('%in%'(x,y))
   if("effectType" %!in% colnames(object$predictions) ){
-    object$predictions$effectType <- NA
+    object$predictions$effectType <- "general"
   }
   # get markers
   Markers <- object$data$geno

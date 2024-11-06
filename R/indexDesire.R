@@ -24,7 +24,7 @@ indexDesire <- function(
   # loading the dataset
   '%!in%' <- function(x,y)!('%in%'(x,y))
   if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- NA
+    phenoDTfile$predictions$effectType <- "general"
   }
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]

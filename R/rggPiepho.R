@@ -26,7 +26,7 @@ rggPiepho <- function(
   # loading the dataset
   '%!in%' <- function(x,y)!('%in%'(x,y))
   if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- NA
+    phenoDTfile$predictions$effectType <- "general"
   }
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
