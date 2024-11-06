@@ -546,7 +546,8 @@ staLMM <- function(
   ##########################################
   ## update data tables
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+  
+  if( all( c("predictions" %in% names(phenoDTfile), "effectType" %!in% colnames(predictionsBind) ) ) ){
     phenoDTfile$predictions$effectType <- NA
   }
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)] )
