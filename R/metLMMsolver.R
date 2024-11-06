@@ -475,7 +475,7 @@ metLMMsolver <- function(
           found <- which(mydataSub[,"designationXXX"] %in% x)
           if(length(found) > 0){
             x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-          }else{x2 <- ""}
+          }else{x2 <- "unknown"}
           return(x2)
         })
 
@@ -536,7 +536,7 @@ metLMMsolver <- function(
             found <- which(mydataSub[,"designationXXX"] %in% x)
             if(length(found) > 0){
               x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-            }else{x2 <- ""}
+            }else{x2 <- "unknown"}
             return(x2)
           })
           # save
@@ -564,7 +564,7 @@ metLMMsolver <- function(
       means$reliability <- 1e-6
       means$trait <- iTrait
       means$effectType <- "designation"
-      means$entryType <- NA
+      means$entryType <- "unknown"
       cv <- (sd(means$predictedValue,na.rm=TRUE)/mean(means$predictedValue,na.rm=TRUE))*100
       ## save metrics
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
