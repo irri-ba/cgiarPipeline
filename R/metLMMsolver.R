@@ -450,7 +450,7 @@ metLMMsolver <- function(
       mu <- mix$coefMME[mix$ndxCoefficients$`(Intercept)`]
       if(length(mu) > 0){
         pp[["(Intercept)"]] <- data.frame(designation="(Intercept)", predictedValue=mu, stdError=sqrt(as.matrix(solve(mix$C))[1,1]), reliability=NA,
-                                          trait=iTrait, effectType="(Intercept)", entryType=NA, environment="(Intercept)" )
+                                          trait=iTrait, effectType="(Intercept)", entryType="(Intercept)", environment="(Intercept)" )
       }
       fixedEffects <- setdiff(mix$EDdf$Term, mix$VarDf$VarComp)
       fixedEffects <- setdiff(fixedEffects, "(Intercept)")
@@ -478,7 +478,7 @@ metLMMsolver <- function(
           }else{x2 <- "unknown"}
           return(x2)
         })
-
+        prov$entryType <- cgiarBase::replaceValues(prov$entryType, Search = "", Replace = "unknown")
         # save
         pp[[iGroupFixed]] <- prov
       };
@@ -539,6 +539,7 @@ metLMMsolver <- function(
             }else{x2 <- "unknown"}
             return(x2)
           })
+          prov$entryType <- cgiarBase::replaceValues(prov$entryType, Search = "", Replace = "unknown")
           # save
           pp[[iGroup]] <- prov
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
