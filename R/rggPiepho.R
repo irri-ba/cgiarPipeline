@@ -3,6 +3,7 @@ rggPiepho <- function(
     analysisId=NULL,
     trait=NULL, # per trait
     yearsToUse=NULL,
+    environmentToUse=NULL,
     entryTypeToUse=NULL,
     effectTypeToUse=NULL,
     verbose=TRUE,
@@ -50,6 +51,10 @@ rggPiepho <- function(
   if(!is.null(yearsToUse)){ # reduce the dataset
     yearsToUse <- as.numeric(as.character(yearsToUse))
     mydata <- mydata[which(mydata$yearOfOrigin %in% yearsToUse),]
+  }
+  if(!is.null(environmentToUse)){ # reduce the dataset
+    environmentToUse <- as.character(environmentToUse)
+    mydata <- mydata[which(mydata$environment %in% environmentToUse),]
   }
   if(!is.null(entryTypeToUse)){ # reduce the dataset
     entryTypeToUse <- as.character(entryTypeToUse)

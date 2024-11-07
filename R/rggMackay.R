@@ -4,6 +4,7 @@ rggMackay <- function(
     trait=NULL, # per trait
     deregressWeight=1,
     partition=FALSE,
+    environmentToUse=NULL,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
     effectTypeToUse=NULL,
@@ -39,6 +40,10 @@ rggMackay <- function(
   if(!is.null(yearsToUse)){ # reduce the dataset by years selected
     yearsToUse <- as.numeric(as.character(yearsToUse))
     mydata <- mydata[which(mydata$yearOfOrigin %in% yearsToUse),]
+  }
+  if(!is.null(environmentToUse)){ # reduce the dataset
+    environmentToUse <- as.character(environmentToUse)
+    mydata <- mydata[which(mydata$environment %in% environmentToUse),]
   }
   if(!is.null(entryTypeToUse)){ # reduce the dataset by entry types selected
     entryTypeToUse <- as.character(entryTypeToUse)
