@@ -69,11 +69,20 @@ rggPiepho <- function(
   # define wether we should deregress or not
   modelingInput <- phenoDTfile$modeling
   modelingInput <- modelingInput[which(modelingInput$analysisId == analysisId),]
-  designationEffectType <- unique(modelingInput[which(modelingInput$parameter == "designationEffectType"),"value"])
-  if(designationEffectType %in% c("BLUP","GBLUP","PBLUP","SSBLUP") ){
-    deregress=TRUE
-  }else{ # BLUE
-    deregress=FALSE
+  if(unique(modelingInput$module) %in% c("mta","mtaFlex") ){
+    designationEffectType <- unique(modelingInput[which(modelingInput$parameter == "designationEffectType"),"value"])
+    if(any(designationEffectType %in% c("BLUP","GBLUP","PBLUP","SSBLUP") )){
+      deregress=TRUE
+    }else{ # BLUE
+      deregress=FALSE
+    }
+  }else{ # mtaLmms
+    designationEffectType <- unique(modelingInput[modelingInput$parameter == "kernels","value"])
+    if(any(designationEffectType %in% c("pedigree","geno") )){
+      deregress=TRUE
+    }else{ # BLUE
+      deregress=FALSE
+    }
   }
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
