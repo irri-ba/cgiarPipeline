@@ -341,7 +341,7 @@ staLMM <- function(
                                                               parameter=paste(c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), iGenoUnit, sep="_"),
                                                               method= paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML", nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),
                                                               value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                              stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(0,nrow(ss)), 0)
+                                                              stdError=c(NA,NA,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(NA,nrow(ss)), NA)
                                                    )
                       )
                       counter=counter+1
@@ -405,7 +405,7 @@ staLMM <- function(
                                                             parameter=paste( c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), iGenoUnit, sep="_"),
                                                             method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML",nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),
                                                             value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                            stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(0, nrow(ss)), 0)
+                                                            stdError=c(NA,NA,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(NA, nrow(ss)), NA)
                                                  )
                     )
                     predictionsList[[counter]] <- pp
@@ -431,7 +431,7 @@ staLMM <- function(
                                                           parameter=paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),
                                                           method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
                                                           value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                          stdError=c(0,0,0,0, 0, 0)
+                                                          stdError=c(NA,NA,NA,NA, NA, NA)
                                                )
                   )
                   currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField,
@@ -462,7 +462,7 @@ staLMM <- function(
                                              data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
                                                         parameter= paste( c("plotH2","CV", "r2","V_designation","V_residual", "mean"), iGenoUnit, sep="_"),
                                                         method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), sep = "-") ,
-                                                        value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(0,0,0,0,0,0)
+                                                        value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(NA,NA,NA,NA,NA,NA)
                                              )
                 )
                 currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), value=c("None","None","None","None","mean"))
@@ -502,7 +502,7 @@ staLMM <- function(
                                            data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
                                                       parameter= paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_") ,
                                                       method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
-                                                      value=c(0, cv, 0,0,0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(0,0,0,0, 0, 0)
+                                                      value=c(0, cv, 0,0,0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(NA,NA,NA,NA, NA, NA)
                                            )
               )
 

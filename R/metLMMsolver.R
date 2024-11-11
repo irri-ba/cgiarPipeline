@@ -547,7 +547,7 @@ metLMMsolver <- function(
                                                   environment=paste(unique(envsSub[[iGroup]]), collapse = "_"),
                                                   parameter=paste(c("mean","CV", "r2","Var"),iGroup,sep="_"),
                                                   method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
-                                                  value=c(mean(blup, na.rm=TRUE), cv, median(reliability), var(blup, na.rm=TRUE) ),
+                                                  value=c(mean(prov[,"predictedValue"], na.rm=TRUE), cv, median(reliability), var(prov[,"predictedValue"], na.rm=TRUE) ),
                                                   stdError=c(NA,NA,sd(reliability, na.rm = TRUE)/sqrt(length(reliability)),NA )
                                        )
           )

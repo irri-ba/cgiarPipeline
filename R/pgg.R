@@ -85,7 +85,7 @@ pgg <- function(
                                               parameter=c("r","r2","sigmaG","meanG","min.G","max.G", "cycleLength","i","R","PGG","nEnvs","nInds","nIndsSel"), 
                                               method=c("sqrt(r2)","mean((G-PEV)/G)","sd(BLUP)","sum(x)/n","min(x)","max(x)","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength","sum","sum","nInds*p"), 
                                               value=c(r,r2,sigma, mu, min.x, max.x, age, i, R, ggAge,nTrials, nInds, nIndsSelected), 
-                                              stdError=0
+                                              stdError=NA
                                    )
       )
       currentModeling <- data.frame(module="pgg", analysisId=pggAnalysisId,trait=iTrait, environment=uE, 

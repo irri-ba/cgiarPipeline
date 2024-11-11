@@ -105,7 +105,7 @@ nPC=c(0,0,0,0);names(nPC) <- c("weather","geno","pedigree", "Yield_Mg_ha")
 nPC
 final <- metLMMsolver(
   phenoDTfile= result, # analysis to be picked from predictions database
-  analysisId=result$status$analysisId[2],
+  analysisId=result$status$analysisId[3],
   fixedTerm= list("environment"),
   randomTerm=list("designation", c("environment","designation")),
   expCovariates=list("pedigree",c("none","pedigree")), # Yield_Mg_ha could be weather
