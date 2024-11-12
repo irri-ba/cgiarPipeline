@@ -454,7 +454,7 @@ metLMMsolver <- function(
       }
       fixedEffects <- setdiff(mix$EDdf$Term, mix$VarDf$VarComp)
       fixedEffects <- setdiff(fixedEffects, "(Intercept)")
-      for(iGroupFixed in fixedEffects){ # iGroupFixed = fixedEffects[2]
+      for(iGroupFixed in fixedEffects){ # iGroupFixed = fixedEffects[1]
         pick <- mix$ndxCoefficients[[iGroupFixed]]
         pick <- pick[which(pick!=0)]
         # shouldBeOne <- which(pick == 0)
@@ -540,6 +540,23 @@ metLMMsolver <- function(
             return(x2)
           })
           prov$entryType <- cgiarBase::replaceValues(prov$entryType, Search = "", Replace = "unknown")
+          ## add across env estimate
+          '%!in%' <- function(x,y)!('%in%'(x,y)) 
+          if( "(Intercept)" %!in% unique(prov$environment) ){
+            provx <- prov
+            provx$designation <- apply(provx[,c("environment","designation")],1,function(x){gsub(paste0(x[1],":"),"",x[2])})
+            provx <- aggregate(cbind(predictedValue,stdError,reliability)~designation+trait+effectType, FUN=mean, data=provx)
+            provx$environment <- "(Intercept)"
+            provx$entryType <- apply(data.frame(provx$designation),1,function(x){
+              found <- which(mydataSub[,"designationXXX"] %in% x)
+              if(length(found) > 0){
+                x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+              }else{x2 <- "unknown"}
+              return(x2)
+            })
+            provx$entryType <- cgiarBase::replaceValues(provx$entryType, Search = "", Replace = "unknown")
+            prov <- rbind(prov, provx[,colnames(prov)])
+          }
           # save
           pp[[iGroup]] <- prov
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
