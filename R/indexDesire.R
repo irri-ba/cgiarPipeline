@@ -16,7 +16,7 @@ indexDesire <- function(
   moduleInput <- phenoDTfile$status[which(phenoDTfile$status$analysisId %in% analysisId),"module"]
   if(length(moduleInput)==0){stop("The file provided doesn't have the analysisId required.",call. = FALSE)}
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if(moduleInput  %!in% c("mta","mtaFlex","mtaLmms") ){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
+  if(any(moduleInput  %!in% c("mta","mtaFlex","mtaLmms","mas") ) ){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) != length(desirev)){stop("The number of traits and desirev values needs to be equal",call. = FALSE)}
   names(desirev) <- trait
