@@ -269,6 +269,7 @@ staLMM <- function(
                   mydata[whereResidualGoes,paste(iTrait,"residual",sep="-")] <- mixRandom$residuals[,1]
                   sm <- summary(mixRandom, which = "variances")
                   newRanran <- setdiff( (sm[,1])[which(sm[,2] >0.05)] , c("residual",genoUnitTraitField,"s(row, col)"))
+                  removedTerms <- setdiff( setdiff(sm[,1],c("residual",genoUnitTraitField) ) , newRanran ) # to inform users that these were removed
 
                   ranran <- paste("~",paste(c(newRanran), collapse=" + "))
                   if(ranran=="~ "){randomFormulaForFixedModel=NULL}else{randomFormulaForFixedModel <- as.formula(ranran)}
@@ -293,7 +294,7 @@ staLMM <- function(
                   ##################################################################
                   ## if model fails try the simplest model, no random and no spatial
                   if(inherits(mixFixed,"try-error") ){
-                    mixFixed <- try( # urgency model, genotypes as fixed but no spatial
+                    mixFixed <- try( # urgency model, genotypes as fixed but no spatial at all
                       LMMsolver::LMMsolve(fixed =as.formula(fixedFormulaForFixedModel),
                                           family = eval(parse(text = traitFamily[iTrait])),
                                           data = droplevels(mydataSub[which(!is.na(mydataSub[,iGenoUnit])),]), maxit = maxit),
@@ -348,9 +349,10 @@ staLMM <- function(
                     }
                   }else{ # fixed model run
                     currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField,
-                                                  parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"),
+                                                  parameter=c("fixedFormula","randomFormula","randomTermsRemoved","spatialFormula","family","designationEffectType"),
                                                   value=c( ifelse(returnFixedGeno, fixedFormulaForFixedModel, fixedFormulaForRanModel),
                                                            ifelse(returnFixedGeno, as.character(randomFormulaForFixedModel)[2], randomFormulaForRanModel ),
+                                                           paste(removedTerms, collapse = "+"),
                                                            as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
                     phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
 

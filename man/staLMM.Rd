@@ -82,7 +82,7 @@ result$metadata$pheno
 
 final <- staLMM(
     phenoDTfile= result,
-    analysisId=result$status$analysisId[1],
+    analysisId=result$status$analysisId[1:],
     trait=c("Plant_Height_cm", "Ear_Height_cm"), # per trait
     traitFamily=c("gaussian(link = 'identity')", "gaussian(link = 'identity')"),
     fixedTerm=c("1"),
