@@ -5,7 +5,8 @@ export(
        traitTransformation,newOutliersFun, modifExpDesign, equalizeTraits,
        staLMM, metLMM, metLMMsolver, mtaLmmFlex, indexDesire, baseIndex, ocs, rggMackay, rggPiepho, pgg,
        singleCrossMat, nasaPowerExtraction, summaryWeather, 
-       numberFounders, individualVerification, markerAssistedSelection
+       numberFounders, individualVerification, markerAssistedSelection,
+       gwas,manhattanPlot
        )
 
 
