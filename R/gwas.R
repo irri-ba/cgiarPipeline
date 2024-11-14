@@ -1,7 +1,4 @@
 
-rm(list = ls(all = TRUE))
-shell("cls")
-
 ### 1. RR-BLUP / GBLUP - based GWAS model
 gwas <- function (
     analysisId = NULL,

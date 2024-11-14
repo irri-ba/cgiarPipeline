@@ -1,7 +1,3 @@
-
-rm(list = ls(all = TRUE))
-shell("cls")
-
 ### FUNCTION FOR INTERACTIVE MANHATTAN PLOT
 manhattanPlot <- function(df = NULL, threshold = NULL) { # , field = NULL
   
