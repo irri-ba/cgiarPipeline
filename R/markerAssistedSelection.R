@@ -77,7 +77,7 @@ markerAssistedSelection <- function(
   # other tables
   object$status <- rbind( object$status, data.frame(module="mas", analysisId=analysisId))
   ## modeling
-  modeling <- data.frame(module="mas",  analysisId=analysisId, trait=c(markersToBeUsed,markersToBeUsed,"inputObject"), environment="across",
+  modeling <- data.frame(module="mas",  analysisId=analysisId, trait=c(markersToBeUsed,markersToBeUsed,"inputObject"), environment="(Intercept)",
                          parameter= c(rep("markerUsed",length(markersToBeUsed)),rep("desire", length(markersToBeUsed)), "analysisId"  ),
                          value= c(markersToBeUsed,round(desire,6),ifelse(is.null(analysisIdForGenoModifications),NA,analysisIdForGenoModifications))
   )
@@ -91,7 +91,7 @@ markerAssistedSelection <- function(
   preds <- data.frame(module="mas",  analysisId=analysisId, pipeline= "unknown",
                       trait="masMerit", gid=1:nrow(Markers), designation=rownames(Markers),
                       mother=NA,father=NA, entryType="test_entry", effectType="designation",
-                      environment="across", predictedValue=as.numeric(merit), stdError=NA,
+                      environment="(Intercept)", predictedValue=as.numeric(merit), stdError=NA,
                       reliability=NA
   )
   if(is.null(object$predictions)){
