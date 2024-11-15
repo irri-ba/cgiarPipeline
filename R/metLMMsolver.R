@@ -53,16 +53,17 @@ metLMMsolver <- function(
   covars <- unique(unlist(expCovariates))
   randomTermForCovars <- unique(unlist(randomTerm))
   if(!is.null(randomTermForCovars)){
-    if( any( covars %in% c("geno", "weather","pedigree", traitsForExpCovariates ) ) ){
+    if( any( covars %in% c("genoA","genoAD", "weather","pedigree", traitsForExpCovariates ) ) ){
       if(verbose){message("Checking and calculating kernels requested")}
       ## MARKER KERNEL
       Markers <- phenoDTfile$data$geno # in form of covariates
-      if("geno" %in% covars & !is.null(Markers)){
-        classify <- unique(unlist(randomTerm)[which(unlist(expCovariates) %in% "geno")])
+      if(any(c("genoA","genoAD") %in% covars) & !is.null(Markers)){
+        classify <- unique(unlist(randomTerm)[which(unlist(expCovariates) %in% c("genoA","genoAD") )])
+        # eventually we may have to do a for loop
         if(verbose){message(paste("   Marker kernel for",paste(classify,collapse = " and "), "requested"))}
         qas <- which( phenoDTfile$status$module == "qaGeno" ); qas <- qas[length(qas)]
         if(length(qas) > 0){
-          modificationsMarkers <- phenoDTfile$modifications$geno[which(phenoDTfile$modifications$geno$analysisId %in% qas),]
+          modificationsMarkers <- phenoDTfile$modifications$geno[which(phenoDTfile$modifications$geno$analysisId %in% phenoDTfile$status$analysisId[qas] ),]
           Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
           if(length(which(is.na(Markers))) > 0){Markers <- apply(Markers,2,sommer::imputev)}
         }else{
@@ -73,7 +74,10 @@ metLMMsolver <- function(
           Markers <- Markers[which(rownames(Markers) %in% unique(mydataX$designation) ), ]
           if(verbose){message(paste("Subsetting marker to",nrow(Markers),"individuals present"))}
         }
-        G <- sommer::A.mat(Markers-1);  G <- G + diag(1e-5, ncol(G), ncol(G))
+        ploidyFactor <- max(Markers)/2
+        if("genoA" %in% covars){G <- sommer::A.mat(Markers-ploidyFactor);} # additive model
+        if("genoAD" %in% covars){centeredM <- Markers-ploidyFactor; G <- sommer::A.mat(cbind(centeredM, ploidyFactor-abs(centeredM) ));} # additive + dominance model
+        G <- G + diag(1e-5, ncol(G), ncol(G))
         Gchol <- t(chol(G))
         if(nPC["geno"] > 0){
           if(verbose){message("   Eigen decomposition of marker kernel requested")}

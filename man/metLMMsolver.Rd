@@ -32,7 +32,7 @@ A list specifying the terms to be considered fixed. If an element in the list ha
 A list specifying the terms to be considered random. If an element in the list has more than one term is considered an interaction between those terms.
 }
 \item{expCovariates}{
-A list specifying the covariates explaining the factors specified in the randomTerm argument. This needs to follow the same structure than the randomTerm argument. The valid values are the characters: 'geno', 'pedigree', 'weather', and any traits available in the STA predictions table.
+A list specifying the covariates explaining the factors specified in the randomTerm argument. This needs to follow the same structure than the randomTerm argument. The valid values are the characters: 'genoA', 'genoAD', 'pedigree', 'weather', and any traits available in the STA predictions table.
 }
 \item{envsToInclude}{
 A table of fields (rows) by traits (columns) to specify which fields should be included in the analysis for each trait.
