@@ -76,7 +76,10 @@ metLMMsolver <- function(
         }
         ploidyFactor <- max(Markers)/2
         if("genoA" %in% covars){G <- sommer::A.mat(Markers-ploidyFactor);} # additive model
-        if("genoAD" %in% covars){centeredM <- Markers-ploidyFactor; G <- sommer::A.mat(cbind(centeredM, ploidyFactor-abs(centeredM) ));} # additive + dominance model
+        if("genoAD" %in% covars){ # if genetic value is desired let's do a log marker model
+          Markers <- apply(Markers+1,2,log)
+          G <- sommer::A.mat(Markers) 
+        } # additive + dominance model
         G <- G + diag(1e-5, ncol(G), ncol(G))
         Gchol <- t(chol(G))
         if(nPC["geno"] > 0){
@@ -452,8 +455,9 @@ metLMMsolver <- function(
       ss <- mix$VarDf;  rownames(ss) <- ss$VarComp
       Ve <- ss["residual","Variance"]
       mu <- mix$coefMME[mix$ndxCoefficients$`(Intercept)`]
+      Ci <- solve(mix$C)
       if(length(mu) > 0){
-        pp[["(Intercept)"]] <- data.frame(designation="(Intercept)", predictedValue=mu, stdError=sqrt(as.matrix(solve(mix$C))[1,1]), reliability=NA,
+        pp[["(Intercept)"]] <- data.frame(designation="(Intercept)", predictedValue=mu, stdError=sqrt(Ci[1,1]), reliability=NA,
                                           trait=iTrait, effectType="(Intercept)", entryType="(Intercept)", environment="(Intercept)" )
       }
       fixedEffects <- setdiff(mix$EDdf$Term, mix$VarDf$VarComp)
@@ -466,7 +470,7 @@ metLMMsolver <- function(
         blue <- mix$coefMME[pick] + mu; names(blue) <- names(pick); #blue[1] <- blue[1]-mu
         start <- sum(mix$EDdf[1:(which(mix$EDdf$Term == iGroupFixed) - 1),"Model"]) # we don't add a one because we need the intercept
         nEffects <- mix$EDdf[which(mix$EDdf$Term == iGroupFixed),"Effective"]#length(blue)
-        pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
+        pev <- Ci[start:(start+nEffects-1),start:(start+nEffects-1)]
         if(is.matrix(pev)){ stdError <- (sqrt(Matrix::diag(pev)))}else{stdError <- pev}
         prov <- data.frame(designation=names(blue), predictedValue=blue, stdError=stdError, reliability=NA,
                            trait=iTrait, effectType=iGroupFixed, environment="(Intercept)" )
@@ -498,8 +502,8 @@ metLMMsolver <- function(
           Vg <- ss[iGroup,"Variance"]
           if(calculateSE){
             if(verbose){message(paste("   Calculating standar errors for",iTrait, iGroup,"predictions"))}
-            Cinv <- solve(mix$C)
-            Cinv <- Cinv[start:(start+nEffects-1),start:(start+nEffects-1)]
+            # Ci <- solve(mix$C)
+            Cinv <- Ci[start:(start+nEffects-1),start:(start+nEffects-1)]
             if(is.matrix(Cinv)){ # when there is more than one effect
               Cinv <- as(Cinv, Class = "dgCMatrix")
               startPev <- seq(1, length(blup), 500)
@@ -544,23 +548,6 @@ metLMMsolver <- function(
             return(x2)
           })
           prov$entryType <- cgiarBase::replaceValues(prov$entryType, Search = "", Replace = "unknown")
-          ## add across env estimate
-          '%!in%' <- function(x,y)!('%in%'(x,y)) 
-          if( "(Intercept)" %!in% unique(prov$environment) ){
-            provx <- prov
-            provx$designation <- apply(provx[,c("environment","designation")],1,function(x){gsub(paste0(x[1],":"),"",x[2])})
-            provx <- aggregate(cbind(predictedValue,stdError,reliability)~designation+trait+effectType, FUN=mean, data=provx)
-            provx$environment <- "(Intercept)"
-            provx$entryType <- apply(data.frame(provx$designation),1,function(x){
-              found <- which(mydataSub[,"designationXXX"] %in% x)
-              if(length(found) > 0){
-                x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
-              }else{x2 <- "unknown"}
-              return(x2)
-            })
-            provx$entryType <- cgiarBase::replaceValues(provx$entryType, Search = "", Replace = "unknown")
-            prov <- rbind(prov, provx[,colnames(prov)])
-          }
           # save
           pp[[iGroup]] <- prov
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
@@ -574,10 +561,6 @@ metLMMsolver <- function(
           )
         }
       }
-      phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                   data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
-                                              parameter=c("Var_residual","nEnv"), method=c("REML","n"), value=c( Ve, length(goodFields) ),stdError=c(NA) )
-      )
     }else{ # if model failed
       if(verbose){ cat(paste("Mixed model failed for trait",iTrait,". Aggregating and assuming h2 = 0 \n"))}
       means <- aggregate(predictedValue ~ designation, FUN=mean, data=mydataSub)
@@ -603,7 +586,41 @@ metLMMsolver <- function(
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
       pp[["designation"]] <- means
     }
-    predictionsList[[iTrait]] <- do.call(rbind,pp)
+    
+    predictionsTrait <- do.call(rbind,pp)
+    ## add across env estimate for designation effect type fitted
+    match1 <- unlist(lapply(fixedTermSub,function(x){sum(as.numeric(x=="designation"))}))
+    names(match1) <- unlist(lapply(fixedTermSub,function(x){paste(x,collapse = "_")}))
+    match2 <- unlist(lapply(randomTermSub,function(x){sum(as.numeric(x=="designation"))}))
+    # names(match2) <- unlist(lapply(randomTermSub,function(x){paste(x,collapse = "_")}))
+    match3 <- c(match1,match2)
+    useForPreds <- names(match3)[which(match3 > 0)]
+    doublematch <- table(predictionsTrait$effectType, predictionsTrait$environment)
+    interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)]))}))
+    '%!in%' <- function(x,y)!('%in%'(x,y)) 
+    if( length(useForPreds) > 0 & interceptCheck==0 ){ # only if there was designation and no main effect exist then we aggregate
+      provx <- predictionsTrait
+      provx <- provx[which(provx$effectType %in% useForPreds),]
+      provx$designation <- apply(provx[,c("environment","designation")],1,function(x){gsub(paste0(x[1],":"),"",x[2])})
+      provx <- aggregate(cbind(predictedValue,stdError,reliability)~designation+trait, FUN=mean, data=provx)
+      provx$environment <- "(Intercept)"
+      provx$effectType <- "designation"
+      provx$entryType <- apply(data.frame(provx$designation),1,function(x){
+        found <- which(mydataSub[,"designationXXX"] %in% x)
+        if(length(found) > 0){
+          x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+        }else{x2 <- "unknown"}
+        return(x2)
+      })
+      provx$entryType <- cgiarBase::replaceValues(provx$entryType, Search = "", Replace = "unknown")
+      predictionsTrait <- rbind(predictionsTrait, provx[,colnames(predictionsTrait)])
+    }
+    #
+    phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
+                                 data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
+                                            parameter=c("Var_residual","nEnv"), method=c("REML","n"), value=c( Ve, length(goodFields) ),stdError=c(NA) )
+    )
+    predictionsList[[iTrait]] <- predictionsTrait
   }
   ## enf of model fitting
   if(length(predictionsList) == 0){stop("There was no predictions to work with. Please look at your H2 boundaries. You may be discarding all envs.",call. = FALSE)}
