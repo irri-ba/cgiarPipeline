@@ -40,6 +40,9 @@ ocs <- function(
   if(!is.null(effectType)){
     mydata <- mydata[which(mydata$effectType %in% effectType),]
   }
+  if(var(mydata$predictedValue) == 0){
+    stop("No variance in the trait to be used for merit. Please correct.", call. = FALSE)
+  }
 
   if( phenoDTfile$status[phenoDTfile$status$analysisId == analysisId,"module"] == "indexD"){
     otherTraits <- setdiff( unique(phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId, "trait"]), c("inputObject","general"))
@@ -177,7 +180,7 @@ ocs <- function(
   ## update structure
   # setdiff(colnames(predictionsBind), colnames(phenoDTfile$predictions))
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,  predictionsBind[, colnames(phenoDTfile$predictions)])
-  newStatus <- data.frame(module="ocs", analysisId=ocsAnalysisId)
+  newStatus <- data.frame(module="ocs", analysisId=ocsAnalysisId, analysisIdName=NA)
   phenoDTfile$status <- rbind(phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)] )
   ## add which data was used as input
   modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait="inputObject", environment="general",
