@@ -75,7 +75,8 @@ markerAssistedSelection <- function(
 
   ###############
   # other tables
-  object$status <- rbind( object$status, data.frame(module="mas", analysisId=analysisId))
+  newStatus <- data.frame(module="mas", analysisId=analysisId, analysisIdName=NA)
+  object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   ## modeling
   modeling <- data.frame(module="mas",  analysisId=analysisId, trait=c(markersToBeUsed,markersToBeUsed,"inputObject"), environment="(Intercept)",
                          parameter= c(rep("markerUsed",length(markersToBeUsed)),rep("desire", length(markersToBeUsed)), "analysisId"  ),

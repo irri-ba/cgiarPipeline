@@ -78,7 +78,7 @@ metLMMsolver <- function(
         if("genoA" %in% covars){G <- sommer::A.mat(Markers-ploidyFactor);} # additive model
         if("genoAD" %in% covars){ # if genetic value is desired let's do a log marker model
           Markers <- apply(Markers+1,2,log)
-          G <- sommer::A.mat(Markers) 
+          G <- sommer::A.mat(Markers)
         } # additive + dominance model
         G <- G + diag(1e-5, ncol(G), ncol(G))
         Gchol <- t(chol(G))
@@ -586,7 +586,7 @@ metLMMsolver <- function(
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
       pp[["designation"]] <- means
     }
-    
+
     predictionsTrait <- do.call(rbind,pp)
     ## add across env estimate for designation effect type fitted
     match1 <- unlist(lapply(fixedTermSub,function(x){sum(as.numeric(x=="designation"))}))
@@ -597,7 +597,7 @@ metLMMsolver <- function(
     useForPreds <- names(match3)[which(match3 > 0)]
     doublematch <- table(predictionsTrait$effectType, predictionsTrait$environment)
     interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)]))}))
-    '%!in%' <- function(x,y)!('%in%'(x,y)) 
+    '%!in%' <- function(x,y)!('%in%'(x,y))
     if( length(useForPreds) > 0 & interceptCheck==0 ){ # only if there was designation and no main effect exist then we aggregate
       provx <- predictionsTrait
       provx <- provx[which(provx$effectType %in% useForPreds),]
@@ -649,7 +649,8 @@ metLMMsolver <- function(
   }
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mtaLmms", analysisId=mtaAnalysisId))
+  newStatus <- data.frame(module="mtaLmms", analysisId=mtaAnalysisId, analysisIdName=NA)
+  phenoDTfile$status <- rbind( phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)] )
   ## add which data was used as input
   modeling <- data.frame(module="mtaLmms",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))

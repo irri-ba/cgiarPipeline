@@ -199,7 +199,8 @@ singleCrossMat <- function( # single cross matrix function
 
   object$data$geno <- rbind(object$data$geno,M)
   # other tables
-  object$status <- rbind( object$status, data.frame(module="scm", analysisId=analysisId))
+  newStatus <- data.frame(module="scm", analysisId=analysisId,analysisIdName=NA)
+  object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   ## add which data was used as input
   modeling <- data.frame(module="scm",  analysisId=analysisId, trait=c("none"), environment="general",
                          parameter= c("allHybrids"), value= c(allHybrids ))

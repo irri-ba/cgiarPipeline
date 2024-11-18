@@ -226,7 +226,8 @@ rggPiepho <- function(
   #########################################
   ## update databases
   ## write the parameters to the parameter database
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="rgg", analysisId=rggAnalysisId))
+  newStatus <- data.frame(module="rgg", analysisId=rggAnalysisId, analysisIdName=NA)
+  phenoDTfile$status <- rbind( phenoDTfile$status,newStatus[,colnames(phenoDTfile$status)] )
   ## add which data was used as input
   modeling <- data.frame(module="rgg",  analysisId=rggAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))

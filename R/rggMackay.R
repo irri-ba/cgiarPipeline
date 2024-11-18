@@ -78,7 +78,7 @@ rggMackay <- function(
       deregress=FALSE
     }
   }
-  
+
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
   for(k in 1:length(trait)){
@@ -213,7 +213,8 @@ rggMackay <- function(
   #########################################
   ## update databases
   ## write the parameters to the parameter database
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="rgg", analysisId=rggAnalysisId))
+  newStatus <- data.frame(module="rgg", analysisId=rggAnalysisId, analysisIdName=NA)
+  phenoDTfile$status <- rbind( phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)])
   ## add which data was used as input
   modeling <- data.frame(module="rgg",  analysisId=rggAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))

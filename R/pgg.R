@@ -15,16 +15,16 @@ pgg <- function(
   if(is.null(by)){by <- "environment"}
   ############################
   # loading the dataset
-  mydata <- phenoDTfile$predictions 
+  mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   paramsPheno <- phenoDTfile$metadata$pheno
   paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
-  
-  '%!in%' <- function(x,y)!('%in%'(x,y)) 
+
+  '%!in%' <- function(x,y)!('%in%'(x,y))
   toChange <- which(colnames(mydata) %!in% paramsPheno$value)
-  
+
   colnames(mydata)[toChange] <- cgiarBase::replaceValues(colnames(mydata)[toChange], Search = paramsPheno$value, Replace = paramsPheno$parameter )
-  
+
   # add missing columns
   '%!in%' <- function(x,y)!('%in%'(x,y))
   keep <- which( paramsPheno$parameter %!in% c("trait","designation","environment","rep","row","col","iBlock","gid","entryType","stage","pipeline") )
@@ -34,20 +34,20 @@ pgg <- function(
     colnames(tpe) <- cgiarBase::replaceValues(colnames(tpe), Search = paramsPheno$value, Replace = paramsPheno$parameter )
     mydata <- merge(mydata, tpe, by="environment", all.x = TRUE)
   }
-  
+
   myPed <- phenoDTfile$data$pedigree
   paramsPed <- phenoDTfile$metadata$pedigree
   colnames(myPed) <- cgiarBase::replaceValues(colnames(myPed), Search = paramsPed$value, Replace = paramsPed$parameter )
-  
+
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
   # if(is.null(environment)){environment <- na.omit(unique(mydata$environment))}
   if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
   yearsToUse <- as.character(unique(myPed$yearOfOrigin))
   mydata <- merge(mydata, myPed[,c("designation","yearOfOrigin")], by="designation", all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
-  
+
   if(length(which(paramsPheno$parameter == "year")) == 0){
-    mydata$year <- mydata$yearOfOrigin 
+    mydata$year <- mydata$yearOfOrigin
     cat("Year column was not mapped, assuming year of origin and first year of testing is the same")
   }
   ############################
@@ -81,24 +81,25 @@ pgg <- function(
       nIndsSelected <- floor(nInds*p)
       ##
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                   data.frame(module="pgg",analysisId=pggAnalysisId, trait= iTrait, environment=uE, 
-                                              parameter=c("r","r2","sigmaG","meanG","min.G","max.G", "cycleLength","i","R","PGG","nEnvs","nInds","nIndsSel"), 
-                                              method=c("sqrt(r2)","mean((G-PEV)/G)","sd(BLUP)","sum(x)/n","min(x)","max(x)","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength","sum","sum","nInds*p"), 
-                                              value=c(r,r2,sigma, mu, min.x, max.x, age, i, R, ggAge,nTrials, nInds, nIndsSelected), 
+                                   data.frame(module="pgg",analysisId=pggAnalysisId, trait= iTrait, environment=uE,
+                                              parameter=c("r","r2","sigmaG","meanG","min.G","max.G", "cycleLength","i","R","PGG","nEnvs","nInds","nIndsSel"),
+                                              method=c("sqrt(r2)","mean((G-PEV)/G)","sd(BLUP)","sum(x)/n","min(x)","max(x)","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength","sum","sum","nInds*p"),
+                                              value=c(r,r2,sigma, mu, min.x, max.x, age, i, R, ggAge,nTrials, nInds, nIndsSelected),
                                               stdError=NA
                                    )
       )
-      currentModeling <- data.frame(module="pgg", analysisId=pggAnalysisId,trait=iTrait, environment=uE, 
+      currentModeling <- data.frame(module="pgg", analysisId=pggAnalysisId,trait=iTrait, environment=uE,
                                     parameter=c("percentage(%)","verbose","classifier"), value=c(percentage, verbose, by))
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
     }
-    
+
   }
   #########################################
   # update databases
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="pgg", analysisId=pggAnalysisId))
+  newStatus <- data.frame(module="pgg", analysisId=pggAnalysisId, analysisIdName=NA)
+  phenoDTfile$status <- rbind( phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)] )
   ## add which data was used as input
-  modeling <- data.frame(module="pgg",  analysisId=pggAnalysisId, trait=c("inputObject"), environment="general", 
+  modeling <- data.frame(module="pgg",  analysisId=pggAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)#paste("pgg done:",id))

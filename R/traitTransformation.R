@@ -13,7 +13,7 @@ traitTransformation <- function(
   transAnalysisId <- as.numeric(Sys.time())
   ###################################
   # loading the dataset
-  mydata <- object$data$pheno 
+  mydata <- object$data$pheno
   traitToRemove <- character()
   for(k in 1:length(trait)){
     if (!trait[k] %in% colnames(mydata)){
@@ -37,10 +37,11 @@ traitTransformation <- function(
   ##########################################
   ## update databases
   ## status
-  object$status <- rbind( object$status, data.frame(module="transP", analysisId=transAnalysisId))
+  newStatus <- data.frame(module="transP", analysisId=transAnalysisId, analysisIdName=NA)
+  object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   # modeling
   currentModeling <- data.frame(module="transP", analysisId=transAnalysisId,trait=trait, environment=NA,
-                                parameter=transformation, 
+                                parameter=transformation,
                                 value=NA)
   object$modeling <- rbind(object$modeling,currentModeling )
   return(object)

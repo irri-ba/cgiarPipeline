@@ -6,11 +6,11 @@ modifExpDesign <- function(object, df){
   colnames(mods) <- c("module","analysisId","trait","reason","row","value")
   traits <- object$metadata$pheno[which(object$metadata$pheno$parameter %in% "trait"),"value"]
   envCol <- object$metadata$pheno[which(object$metadata$pheno$parameter %in% "environment"),"value"]
-  
-  
+
+
   mydata <- object$data$pheno
   counter <- 1; myList <- list()
-  for(i in 1:ncol(df)){ # for each experimental design factor 
+  for(i in 1:ncol(df)){ # for each experimental design factor
     for(j in 1:nrow(df)){ # for each environment
       if(df[j,i] == 0){ # if user wants to delete this information
         rowsToSilence <- which(mydata[,envCol] == rownames(df)[j]) # rows for this environments
@@ -25,9 +25,9 @@ modifExpDesign <- function(object, df){
   }else{
     object$modifications$pheno <- myMods
   }
-  status <- data.frame(module="qaDesign", analysisId=analysisId)
+  status <- data.frame(module="qaDesign", analysisId=analysisId, analysisIdName=NA)
   if(!is.null(object$status)){
-    object$status <- rbind(object$status, status)
+    object$status <- rbind(object$status, status[,colnames(object$status)])
   }else{
     object$status <- status
   }

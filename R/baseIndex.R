@@ -80,7 +80,8 @@ baseIndex <- function(
   )
 
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])
-  phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="indexB", analysisId=idxAnalysisId))
+  newStatus <- data.frame(module="indexB", analysisId=idxAnalysisId)
+  phenoDTfile$status <- rbind(phenoDTfile$status, newStatus[, colnames(phenoDTfile$status)] )
   modeling <- data.frame(module="indexB",
                          analysisId=idxAnalysisId,
                          trait="inputObject",

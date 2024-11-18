@@ -38,9 +38,9 @@ staLMM <- function(
     phenoDTfile$modeling <- provMet
   }
   if(is.null(phenoDTfile$status)){
-    provMet <- as.data.frame(matrix(nrow=0, ncol=2))
-    colnames(provMet) <- c("module" ,     "analysisId" )
-    phenoDTfile$status <- data.frame(module="sta", analysisId=staAnalysisId)
+    provMet <- as.data.frame(matrix(nrow=0, ncol=3))
+    colnames(provMet) <- c("module" ,     "analysisId" , "analysisIdName" )
+    phenoDTfile$status <- provMet# data.frame(module="sta", analysisId=staAnalysisId, analysisIdName=NA)
   }
   ###################################
   # loading the dataset
@@ -451,7 +451,6 @@ staLMM <- function(
                 pp <- aggregate(as.formula(paste("trait ~", iGenoUnit)), FUN=mean, data=mydataSub)
                 colnames(pp)[1:2] <- c("designation","predictedValue")
                 pp$stdError <- sd(pp$predictedValue)  # 1
-                # pp$status <- "averaged"
                 pp$reliability <- 1e-6
                 pp$trait <- iTrait
                 pp$environmentF <- iField
@@ -548,12 +547,13 @@ staLMM <- function(
   ##########################################
   ## update data tables
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  
+
   if( all( c("predictions" %in% names(phenoDTfile), "effectType" %!in% colnames(predictionsBind) ) ) ){
     phenoDTfile$predictions$effectType <- NA
   }
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)] )
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="sta", analysisId=staAnalysisId))
+  newStatus <- data.frame(module="sta", analysisId=staAnalysisId, analysisIdName=NA)
+  phenoDTfile$status <- rbind( phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)])
   ### change column names back for mapping
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
   ##

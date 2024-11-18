@@ -88,7 +88,8 @@ individualVerification <- function(
   }else{
   ###############
   # other tables
-  object$status <- rbind( object$status, data.frame(module="gVerif", analysisId=analysisId))
+  newStatus <- data.frame(module="gVerif", analysisId=analysisId, analysisIdName=NA)
+  object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   ## modeling
   modeling <- data.frame(module="gVerif",  analysisId=analysisId, trait=c(rep("none",length(colsForExpecGeno)+length(markersToBeUsed) ),"inputObject"), environment="general",
                          parameter= c(rep("expectedGenoColumn",length(colsForExpecGeno)), rep("markerUsed",length(markersToBeUsed)), "analysisId"  ),

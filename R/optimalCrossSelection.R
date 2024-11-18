@@ -175,7 +175,8 @@ ocs <- function(
   ## update structure
   # setdiff(colnames(predictionsBind), colnames(phenoDTfile$predictions))
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,  predictionsBind[, colnames(phenoDTfile$predictions)])
-  phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="ocs", analysisId=ocsAnalysisId))
+  newStatus <- data.frame(module="ocs", analysisId=ocsAnalysisId)
+  phenoDTfile$status <- rbind(phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)] )
   ## add which data was used as input
   modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait="inputObject", environment="general",
                          parameter= "analysisId", value= analysisId)
