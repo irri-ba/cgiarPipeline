@@ -13,9 +13,12 @@ markerAssistedSelection <- function(
   if (is.null(object)) stop("No input file specified.")
   if (is.null(analysisIdForGenoModifications)) stop("No geno clean file specified.")
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("effectType" %!in% colnames(object$predictions) ){
-    object$predictions$effectType <- "general"
+  if(!is.null(object$predictions)){
+    if("effectType" %!in% colnames(object$predictions) ){
+      object$predictions$effectType <- "general"
+    }
   }
+
   # get markers
   Markers <- object$data$geno
   if(is.null(Markers)){stop("This function requires your object to have marker information.", call. = FALSE)}
