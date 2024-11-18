@@ -644,7 +644,7 @@ metLMMsolver <- function(
   #########################################
   ## update databases
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if(!is.null(object$predictions)){
+  if(!is.null(phenoDTfile$predictions)){
     if("effectType" %!in% colnames(phenoDTfile$predictions) ){
       phenoDTfile$predictions$effectType <- NA
     }
