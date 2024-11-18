@@ -27,8 +27,10 @@ ocs <- function(
   ############################
   # loading the dataset
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- "general"
+  if(!is.null(object$predictions)){
+    if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+      phenoDTfile$predictions$effectType <- "general"
+    }
   }
   mydata <- phenoDTfile$predictions #
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
@@ -56,7 +58,7 @@ ocs <- function(
                          indivCol = paramsPed[paramsPed$parameter=="designation","value"],
                          damCol = paramsPed[paramsPed$parameter=="mother","value"],
                          sireCol = paramsPed[paramsPed$parameter=="father","value"]
-                         )
+    )
   }
   if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
     M <- phenoDTfile$data$geno
@@ -155,9 +157,9 @@ ocs <- function(
         eMPtrait = (ebv2[crossPlan[ ,1],] +  ebv2[crossPlan[ ,2],])/2  #
 
         traitPredictions[[iTrait]] <- data.frame(module="ocs",  analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
-                                                   trait=iTrait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
-                                                   mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross", effectType="designation",
-                                                   environment=treatment, predictedValue=eMPtrait, stdError=inbreedingSel, reliability=crossPlan[,3]
+                                                 trait=iTrait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
+                                                 mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross", effectType="designation",
+                                                 environment=treatment, predictedValue=eMPtrait, stdError=inbreedingSel, reliability=crossPlan[,3]
         )
         metrics <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=iTrait, environment=treatment,
                               parameter= c("meanValue"),method= "sum/n", value=c(mean(eMPtrait)),

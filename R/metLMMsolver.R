@@ -520,7 +520,7 @@ metLMMsolver <- function(
           badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
           badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
           prov <- data.frame(designation=names(blup), predictedValue=blup, stdError=stdError, reliability=reliability,
-                                     trait=iTrait, effectType=iGroup , environment=envsSub[[iGroup]] )
+                             trait=iTrait, effectType=iGroup , environment=envsSub[[iGroup]] )
           # add fixed effects if present in the random term
           feToAdd <- intersect( randomTermSub[[iGroup]], fixedEffects ) # unlist(fixedTermSub)
           if(length(feToAdd) > 0){
@@ -644,8 +644,10 @@ metLMMsolver <- function(
   #########################################
   ## update databases
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- NA
+  if(!is.null(object$predictions)){
+    if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+      phenoDTfile$predictions$effectType <- NA
+    }
   }
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
@@ -658,7 +660,7 @@ metLMMsolver <- function(
     modeling <- rbind(modeling,
                       data.frame(module="mtaLmms",  analysisId=mtaAnalysisId, trait=names(nPC), environment="general",
                                  parameter= c("nPC"), value= nPC )
-                      )
+    )
   }
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)

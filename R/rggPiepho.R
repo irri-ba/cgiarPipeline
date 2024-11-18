@@ -26,8 +26,10 @@ rggPiepho <- function(
   ############################
   # loading the dataset
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- "general"
+  if(!is.null(object$predictions)){
+    if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+      phenoDTfile$predictions$effectType <- "general"
+    }
   }
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
@@ -216,10 +218,10 @@ rggPiepho <- function(
                                  )
     )
     myPreds <- data.frame(module = "rgg", analysisId = rggAnalysisId, pipeline = NA, trait = iTrait,
-               gid = NA, designation = gsub("designation_","",mixCoeff$designation$coef),
-               mother = NA, father = NA, entryType = NA, effectType=NA,
-               environment = "across", predictedValue = mixCoeff$designation$value + baseline,
-               stdError = mixCoeff$designation$se, reliability = NA)
+                          gid = NA, designation = gsub("designation_","",mixCoeff$designation$coef),
+                          mother = NA, father = NA, entryType = NA, effectType=NA,
+                          environment = "across", predictedValue = mixCoeff$designation$value + baseline,
+                          stdError = mixCoeff$designation$se, reliability = NA)
     phenoDTfile$predictions <- rbind(phenoDTfile$predictions, myPreds[,colnames(phenoDTfile$predictions)])
 
   }

@@ -23,8 +23,10 @@ indexDesire <- function(
   ############################
   # loading the dataset
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("effectType" %!in% colnames(phenoDTfile$predictions) ){
-    phenoDTfile$predictions$effectType <- "general"
+  if(!is.null(object$predictions)){
+    if("effectType" %!in% colnames(phenoDTfile$predictions) ){
+      phenoDTfile$predictions$effectType <- "general"
+    }
   }
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]
@@ -96,9 +98,9 @@ indexDesire <- function(
   newStatus <- data.frame(module="indexD", analysisId=idxAnalysisId,analysisIdName=NA)
   phenoDTfile$status <- rbind(phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)])
   modeling1 <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("inputObject"), environment="general",
-                         parameter= c("analysisId"), value= c(analysisId))
+                          parameter= c("analysisId"), value= c(analysisId))
   modeling2 <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("general"), environment="general",
-                         parameter= c("scaled", rep("entryTypeToUse",length(entryTypeToUse)) ), value= c(scaled, entryTypeToUse))
+                          parameter= c("scaled", rep("entryTypeToUse",length(entryTypeToUse)) ), value= c(scaled, entryTypeToUse))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling1[, colnames(phenoDTfile$modeling)],modeling2[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
