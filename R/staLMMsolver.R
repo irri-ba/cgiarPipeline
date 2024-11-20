@@ -346,8 +346,36 @@ staLMM <- function(
                                                    )
                       )
                       counter=counter+1
+                    }else{ # something still went wrong, return means
+                      if(verbose){cat(paste("No design to fit or singularities encountered in the random model, aggregating and assuming h2 = 0 \n"))}
+                      pp <- aggregate(as.formula(paste("trait ~", iGenoUnit)), FUN=mean, data=mydataSub)
+                      colnames(pp)[1:2] <- c("designation","predictedValue")
+                      pp$stdError <- sd(pp$predictedValue) #1
+                      pp$reliability <- 1e-6
+                      pp$trait <- iTrait
+                      pp$environmentF <- iField
+                      pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unlabeled"); return(x2)})
+                      pp$effectType <- "designation"
+                      if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
+                      predictionsList[[counter]] <- pp;
+                      cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
+                      phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
+                                                   data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
+                                                              parameter=paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),
+                                                              method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
+                                                              value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ),
+                                                              stdError=c(NA,NA,NA,NA, NA, NA)
+                                                   )
+                      )
+                      currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField,
+                                                    parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"),
+                                                    value=c( ifelse(returnFixedGeno, fixedFormulaForFixedModel, fixedFormulaForRanModel),
+                                                             ifelse(returnFixedGeno, as.character(randomFormulaForFixedModel)[2], randomFormulaForRanModel ),
+                                                             as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+                      phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
+                      counter=counter+1
                     }
-                  }else{ # fixed model run
+                  }else{ # fixed model run well
                     currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField,
                                                   parameter=c("fixedFormula","randomFormula","randomTermsRemoved","spatialFormula","family","designationEffectType"),
                                                   value=c( ifelse(returnFixedGeno, fixedFormulaForFixedModel, fixedFormulaForRanModel),
