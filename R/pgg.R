@@ -44,7 +44,7 @@ pgg <- function(
   if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
   yearsToUse <- as.character(unique(myPed$yearOfOrigin))
   mydata <- merge(mydata, myPed[,c("designation","yearOfOrigin")], by="designation", all.x=TRUE )
-  mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
+  # mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
 
   if(length(which(paramsPheno$parameter == "year")) == 0){
     mydata$year <- mydata$yearOfOrigin
