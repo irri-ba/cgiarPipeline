@@ -182,6 +182,7 @@ metLMMsolver <- function(
       }# end of if statement for a trait-based kernel
     }# end of if statement for any kernel
   }
+  # print(dim(Nchol))
   ##########################################
   ##########################################
   ## COMPLETE THE CLEANING PARAMETERS (7 lines)
@@ -278,9 +279,10 @@ metLMMsolver <- function(
             for(irandom in 1:length(randomTermProv)){ # for each element in the list # irandom=1
               randomTermProv2 <- randomTermProv[[irandom]]
               for(irandom2 in  1:length(randomTermProv2)){ # for each factor in the interactions # irandom2 = 1
+                # print(expCovariatesProv[[irandom]][irandom2])
                 if( expCovariatesProv[[irandom]][irandom2] == "weather"){
                   M <- Wchol
-                }else if(expCovariatesProv[[irandom]][irandom2] == "geno"){
+                }else if(expCovariatesProv[[irandom]][irandom2] %in% c("geno","genoA","genoAD") ){
                   M = Gchol
                 }else if(expCovariatesProv[[irandom]][irandom2] == "pedigree"){
                   M <- Nchol
@@ -310,7 +312,7 @@ metLMMsolver <- function(
                 # get kernel
                 if( expCovariatesProv[[irandom]][irandom2] == "weather"){
                   M <- Wchol # Weather
-                }else if(expCovariatesProv[[irandom]][irandom2] == "geno"){
+                }else if(expCovariatesProv[[irandom]][irandom2] %in% c("geno","genoA","genoAD") ){
                   M = Gchol # Markers
                 }else if(expCovariatesProv[[irandom]][irandom2] == "pedigree"){
                   M <- Nchol # Pedigree
@@ -386,6 +388,7 @@ metLMMsolver <- function(
       }
     }
   }
+  # print(groupingTermTrait)
   ##########################################
   ##########################################
   ## MODEL FITTING
@@ -426,6 +429,8 @@ metLMMsolver <- function(
       if(verbose){message("   Ignoring weights in the analysis. Residual variance will be estimated.")  }
     }
     if(is.null(randomTermSub)){groupingSub=NULL}
+    # print(groupingSub)
+    # print(ranFormulation)
     ## model fit
     mix <- try(
       LMMsolver::LMMsolve(fixed =as.formula(fix),
@@ -588,11 +593,12 @@ metLMMsolver <- function(
     }
 
     predictionsTrait <- do.call(rbind,pp)
-    ## add across env estimate for designation effect type fitted
+    #############################################################
+    ## add across env estimate for DESIGNATION effect type fitted
+    #############################################################
     match1 <- unlist(lapply(fixedTermSub,function(x){sum(as.numeric(x=="designation"))}))
     names(match1) <- unlist(lapply(fixedTermSub,function(x){paste(x,collapse = "_")}))
     match2 <- unlist(lapply(randomTermSub,function(x){sum(as.numeric(x=="designation"))}))
-    # names(match2) <- unlist(lapply(randomTermSub,function(x){paste(x,collapse = "_")}))
     match3 <- c(match1,match2)
     useForPreds <- names(match3)[which(match3 > 0)]
     doublematch <- table(predictionsTrait$effectType, predictionsTrait$environment)
@@ -605,6 +611,34 @@ metLMMsolver <- function(
       provx <- aggregate(cbind(predictedValue,stdError,reliability)~designation+trait, FUN=mean, data=provx)
       provx$environment <- "(Intercept)"
       provx$effectType <- "designation"
+      provx$entryType <- apply(data.frame(provx$designation),1,function(x){
+        found <- which(mydataSub[,"designationXXX"] %in% x)
+        if(length(found) > 0){
+          x2 <- paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#");
+        }else{x2 <- "unknown"}
+        return(x2)
+      })
+      provx$entryType <- cgiarBase::replaceValues(provx$entryType, Search = "", Replace = "unknown")
+      predictionsTrait <- rbind(predictionsTrait, provx[,colnames(predictionsTrait)])
+    }
+    #############################################################
+    ## add across env estimate for GID effect type fitted
+    #############################################################
+    match1 <- unlist(lapply(fixedTermSub,function(x){sum(as.numeric(x=="gid"))}))
+    names(match1) <- unlist(lapply(fixedTermSub,function(x){paste(x,collapse = "_")}))
+    match2 <- unlist(lapply(randomTermSub,function(x){sum(as.numeric(x=="gid"))}))
+    match3 <- c(match1,match2)
+    useForPreds <- names(match3)[which(match3 > 0)]
+    doublematch <- table(predictionsTrait$effectType, predictionsTrait$environment)
+    interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)]))}))
+    '%!in%' <- function(x,y)!('%in%'(x,y))
+    if( length(useForPreds) > 0 & interceptCheck==0 ){ # only if there was designation and no main effect exist then we aggregate
+      provx <- predictionsTrait
+      provx <- provx[which(provx$effectType %in% useForPreds),]
+      provx$designation <- apply(provx[,c("environment","designation")],1,function(x){gsub(paste0(x[1],":"),"",x[2])})
+      provx <- aggregate(cbind(predictedValue,stdError,reliability)~designation+trait, FUN=mean, data=provx)
+      provx$environment <- "(Intercept)"
+      provx$effectType <- "gid"
       provx$entryType <- apply(data.frame(provx$designation),1,function(x){
         found <- which(mydataSub[,"designationXXX"] %in% x)
         if(length(found) > 0){
