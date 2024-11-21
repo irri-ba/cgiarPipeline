@@ -235,7 +235,7 @@ metLMMsolver <- function(
     if(length(vt) > 0){ # we have data for the trait
       prov <- mydata[vt,]
       # filter by the environments to include
-      vte <- which(mydata[,"environment"] %in% rownames(envsToInclude)[as.logical(envsToInclude[,iTrait])])
+      vte <- which(prov[,"environment"] %in% rownames(envsToInclude)[as.logical(envsToInclude[,iTrait])])
       prov <- prov[vte,]
       # remove bad environment based on h2 and r2
       pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2", apply(expand.grid( c("plotH2","H2","meanR2","r2"), c("designation","mother","father")),1,function(f){paste(f,collapse = "_")}) )),]
@@ -454,7 +454,7 @@ metLMMsolver <- function(
       ## save the environments used goodFields
       currentModeling <- data.frame(module="mtaLmms", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
                                     parameter="includedInMta",
-                                    value=ifelse(allEnvironments%in%goodFields, TRUE, FALSE))
+                                    value=ifelse(allEnvironments%in%unique(mydataSub$environment), TRUE, FALSE))
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
       # get variance components
       ss <- mix$VarDf;  rownames(ss) <- ss$VarComp
