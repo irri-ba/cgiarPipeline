@@ -67,7 +67,8 @@ metLMMsolver <- function(
           Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
           if(length(which(is.na(Markers))) > 0){Markers <- apply(Markers,2,sommer::imputev)}
         }else{
-          Markers <- apply(Markers,2,sommer::imputev)
+          missing <- apply(Markers,2,sommer::propMissing)
+          Markers <- apply(Markers[,which(missing < 0.9)],2,sommer::imputev)
         }
         if(nPC["geno"] < 0){ # do not include extra individuals
           mydataX <-  phenoDTfile$predictions[which( phenoDTfile$predictions$analysisId %in% analysisId),]
