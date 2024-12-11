@@ -543,6 +543,7 @@ metLMMsolver <- function(
             prov[,"predictedValue"] <-  prov[,"predictedValue"] + mu
           }
           # end of adding fixed effects
+          sdP <- sd(prov[,"predictedValue"],na.rm=TRUE)
           cv <- (sd(prov[,"predictedValue"],na.rm=TRUE)/mean(prov[,"predictedValue"],na.rm=TRUE))*100
           # add additional entry type labels
           mydataSub[,"designationXXX"] <- apply(mydataSub[,unlist(randomTermSub[[iGroup]]),drop=FALSE],1,function(x){paste(x,collapse = ":")})
@@ -559,9 +560,9 @@ metLMMsolver <- function(
           phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                        data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait,
                                                   environment=paste(unique(envsSub[[iGroup]]), collapse = "_"),
-                                                  parameter=paste(c("mean","CV", "r2","Var"),iGroup,sep="_"),
-                                                  method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
-                                                  value=c(mean(prov[,"predictedValue"], na.rm=TRUE), cv, median(reliability), var(prov[,"predictedValue"], na.rm=TRUE) ),
+                                                  parameter=c( paste(c("mean","sd", "r2","Var"),iGroup,sep="_") ),
+                                                  method=c("sum(x)/n","sd","(G-PEV)/G","REML"),
+                                                  value=c(mean(prov[,"predictedValue"], na.rm=TRUE), sdP, median(reliability), var(prov[,"predictedValue"], na.rm=TRUE) ),
                                                   stdError=c(NA,NA,sd(reliability, na.rm = TRUE)/sqrt(length(reliability)),NA )
                                        )
           )
@@ -576,13 +577,15 @@ metLMMsolver <- function(
       means$trait <- iTrait
       means$effectType <- "designation"
       means$entryType <- "unknown"
+      sdP <- sd(means$predictedValue,na.rm=TRUE)
       cv <- (sd(means$predictedValue,na.rm=TRUE)/mean(means$predictedValue,na.rm=TRUE))*100
       ## save metrics
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                    data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait=iTrait,
                                               environment="across",
-                                              parameter=c("mean","CV", "r2","Var_designation","Var_residual","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML","n"),
-                                              value=c(mean(means$predictedValue, na.rm=TRUE), cv, NA, NA, NA, length(goodFields) ),
+                                              parameter=c("mean","sd", "r2","Var_designation","Var_residual"), 
+                                              method=c("sum(x)/n","sd","(G-PEV)/G","REML","REML"),
+                                              value=c(mean(means$predictedValue, na.rm=TRUE), sdP, NA, NA, NA ),
                                               stdError=NA
                                    )
       )
@@ -653,7 +656,10 @@ metLMMsolver <- function(
     #
     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                  data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
-                                            parameter=c("Var_residual","nEnv"), method=c("REML","n"), value=c( Ve, length(goodFields) ),stdError=c(NA) )
+                                            parameter=c("Var_residual","nEnv","nEntries"), 
+                                            method=c("REML","n","n"), 
+                                            value=c( Ve, length(goodFields), length(unique(predictionsTrait$designation)) ),
+                                            stdError=c(NA,NA,NA) )
     )
     predictionsList[[iTrait]] <- predictionsTrait
   }
