@@ -48,8 +48,10 @@ metLMMsolver <- function(
   ##########################################
   ## EXTRACT POSSIBLE EXPLANATORY COVARIATES AND FORM KERNELS (30 lines)
   Weather <- cgiarPipeline::summaryWeather(phenoDTfile, wide=TRUE) # in form of covariates
-  Weather <- apply(Weather,2,sommer::imputev)
-  colnames(Weather) <- gsub(" ","",colnames(Weather))
+  if(nrow(Weather) > 1){
+    Weather <- apply(Weather,2,sommer::imputev)
+    colnames(Weather) <- gsub(" ","",colnames(Weather))
+  }
   covars <- unique(unlist(expCovariates))
   randomTermForCovars <- unique(unlist(randomTerm))
   if(!is.null(randomTermForCovars)){
@@ -571,6 +573,7 @@ metLMMsolver <- function(
     }else{ # if model failed
       if(verbose){ cat(paste("Mixed model failed for trait",iTrait,". Aggregating and assuming h2 = 0 \n"))}
       means <- aggregate(predictedValue ~ designation, FUN=mean, data=mydataSub)
+      Ve <- var(mydataSub[,"predictedValue"], na.rm=TRUE)
       means$environment <- "(Intercept)"
       means$stdError <- sd(means$predictedValue)
       means$reliability <- 1e-6
@@ -583,7 +586,7 @@ metLMMsolver <- function(
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                    data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait=iTrait,
                                               environment="across",
-                                              parameter=c("mean","sd", "r2","Var_designation","Var_residual"), 
+                                              parameter=c("mean","sd", "r2","Var_designation","Var_residual"),
                                               method=c("sum(x)/n","sd","(G-PEV)/G","REML","REML"),
                                               value=c(mean(means$predictedValue, na.rm=TRUE), sdP, NA, NA, NA ),
                                               stdError=NA
@@ -656,8 +659,8 @@ metLMMsolver <- function(
     #
     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                  data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
-                                            parameter=c("Var_residual","nEnv","nEntries"), 
-                                            method=c("REML","n","n"), 
+                                            parameter=c("Var_residual","nEnv","nEntries"),
+                                            method=c("REML","n","n"),
                                             value=c( Ve, length(goodFields), length(unique(predictionsTrait$designation)) ),
                                             stdError=c(NA,NA,NA) )
     )

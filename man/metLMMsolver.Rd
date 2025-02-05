@@ -13,7 +13,7 @@ metLMMsolver(
     fixedTerm= list("1"),  randomTerm=NULL, expCovariates=NULL,
     envsToInclude=NULL, trait= NULL, traitFamily=NULL, useWeights=TRUE,
     calculateSE=TRUE, heritLB= 0.15,  heritUB= 0.95,
-    meanLB=0, meanUB=Inf, nPC=NULL, 
+    meanLB=0, meanUB=Inf, nPC=NULL,
     maxIters=50,  verbose=TRUE
 )
 }
@@ -41,7 +41,7 @@ A table of fields (rows) by traits (columns) to specify which fields should be i
 A character vector with the traits that should be fitted.
 }
 \item{traitFamily}{
-A character vector specifying the family distribution for each trait in case normal gaussian is not a good fit. 
+A character vector specifying the family distribution for each trait in case normal gaussian is not a good fit.
 }
 \item{useWeights}{
 A TRUE or FALSE statement to specify if the weights using the standard error should be applied. The default is TRUE since we assume the two-stage model.
@@ -62,7 +62,9 @@ A numeric value or vector for trait mean lower-bound-threshold(s). Any trait by 
 A numeric value or vector for trait mean upper-bound-threshold(s). Any trait by environment combination above this value will be excluded from the analysis.
 }
 \item{nPC}{
-Number of principal components in case a reduction of the kernel computed using explanatory covariates has to be applied according to Odegard et al. (2019).
+Number of principal components in case a reduction of the kernel computed using explanatory covariates has to be applied according to Odegard et al. (2019). This should be a vector with
+as many values as kernels available. For example 'weather', 'geno', 'genoAD', 'pedigree', and all available traits can be used to produce kernels that can be then passed as kernels for specific
+factors. The 'weather' kernel can be used for example to form a kernel for the environment levels, etc.
 }
 \item{maxIters}{
 Maximum number of restricted maximum likelihood iterations to be run for each trait.
