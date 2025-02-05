@@ -116,7 +116,7 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
 
 
 summaryWeather <- function(object, wide=FALSE){
-  
+
   if(is.null(object$data$weather)){
     out <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(out) <- c("environment", "trait", "parameter" ,  "value")
     ### summarize environmental indices
@@ -126,14 +126,14 @@ summaryWeather <- function(object, wide=FALSE){
       #check if each column has all missing values
       all_miss <- apply(data2, 2, function(x) all(is.na(x)))
       #display columns with all missing values
-      all_miss_var <- names(all_miss[all_miss>0])  
-      
+      all_miss_var <- names(all_miss[all_miss>0])
+
       traits2 <- setdiff(metadata2[which(metadata2$parameter == "trait"),"value"],all_miss_var)
       environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
       provList2 <- list()
       for(iTrait2 in traits2){ # iTrait2 = traits2[1]
         data2$traitUsed <- data2[,iTrait2]
-        ei <- aggregate(as.formula(paste("traitUsed","~environment")), data=data2,FUN=mean, na.rm=TRUE); 
+        ei <- aggregate(as.formula(paste("traitUsed","~environment")), data=data2,FUN=mean, na.rm=TRUE);
         colnames(ei)[2] <- "value"
         ei$trait <- iTrait2
         ei$parameter <- "mean"
@@ -148,7 +148,7 @@ summaryWeather <- function(object, wide=FALSE){
   }else{
     data <- object$data$weather
     metadata <- object$metadata$weather
-    
+
     traits <- metadata[which(metadata$parameter == "trait"),"value"]
     environ <- metadata[which(metadata$parameter == "environment"),"value"]
     lat <- metadata[which(metadata$parameter == "latitude"),"value"]
@@ -170,7 +170,7 @@ summaryWeather <- function(object, wide=FALSE){
       provList[[iTrait]] <- rbind(prov,prov2)
     }
     out <- do.call(rbind,provList)
-    
+
     ### summarize environmental indices
     data2 <- object$data$pheno
     metadata2 <- object$metadata$pheno
@@ -178,13 +178,13 @@ summaryWeather <- function(object, wide=FALSE){
       #check if each column has all missing values
       all_miss <- apply(data2, 2, function(x) all(is.na(x)))
       #display columns with all missing values
-      all_miss_var <- names(all_miss[all_miss>0])  
-      
+      all_miss_var <- names(all_miss[all_miss>0])
+
       traits2 <- setdiff(metadata2[which(metadata2$parameter == "trait"),"value"],all_miss_var)
       environ2 <- metadata2[which(metadata2$parameter == "environment"),"value"]
       provList2 <- list()
       for(iTrait2 in traits2){ # iTrait2 = traits2[1]
-        ei <- aggregate(as.formula(paste(iTrait2,"~environment")), data=data2,FUN=mean, na.rm=TRUE); 
+        ei <- aggregate(as.formula(paste(iTrait2,"~environment")), data=data2,FUN=mean, na.rm=TRUE);
         colnames(ei)[2] <- "value"
         ei$trait <- iTrait2
         ei$parameter <- "mean"
@@ -196,27 +196,32 @@ summaryWeather <- function(object, wide=FALSE){
       }
       out <- rbind(out, do.call(rbind,provList2) )
     }
-    
+
   }
-  
+
   if(wide){
     out$tp <- paste(out$trait, out$parameter)
     out <- reshape(out[,c("environment","tp","value")], direction = "wide", idvar = "environment",
                        timevar = "tp", v.names = "value", sep= "_")
     rownames(out) <- out$environment
-    Z = model.matrix(~environment-1, data=out); colnames(Z) <- gsub("ironment","",colnames(Z))
+    if(nrow(out) > 1){
+      Z = model.matrix(~environment-1, data=out); colnames(Z) <- gsub("ironment","",colnames(Z))
+    }else{
+      Z <- matrix(1,1,1); colnames(Z) <- paste0("env",out$environment)
+    }
+
     out <- cbind(out,Z)
     # colnames(out) <- gsub("[[:punct:]]", "", colnames(out) )
     colnames(out) <- gsub(" ","",colnames(out))
     out <- out[,-1]
   }
-  
+
   # meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
   #             parameter=c(rep("mean",3), rep("sd",3), c("coordinate", "coordinate", "date", "date")),
   #             value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE), c(LAT[iEnv], LONG[iEnv], date_planted[iEnv], date_harvest[iEnv] ) )
   # )
   return(out)
-  
+
 }
 
 
