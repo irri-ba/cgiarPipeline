@@ -588,7 +588,7 @@ metLMMsolver <- function(
                                               environment="across",
                                               parameter=c("mean","sd", "r2","Var_designation","Var_residual"),
                                               method=c("sum(x)/n","sd","(G-PEV)/G","REML","REML"),
-                                              value=c(mean(means$predictedValue, na.rm=TRUE), sdP, NA, NA, NA ),
+                                              value=c(mean(means$predictedValue, na.rm=TRUE), sdP, 0, 0, Ve ),
                                               stdError=NA
                                    )
       )
