@@ -2,8 +2,8 @@
 
 baseIndex <- function(
   phenoDTfile,       # input data
-  analysisId,        # analysis from the predictions data
-  analysisIdName,    # name assigned by user
+  analysisId,        # analysis from the predictions data  
+  analysisIdName,    # analysis from the predictions data  
   trait,             # traits to include in the index
   weights            # vector of economic weights
 ) {
@@ -20,8 +20,7 @@ baseIndex <- function(
   #if("effectType" %!in% colnames(phenoDTfile$predictions) ){
   #  phenoDTfile$predictions$effectType <- "general"
   #}
-  phenoDTfilePred <- phenoDTfile$predictions
-  #phenoDTfilePred <- phenoDTfilePred[phenoDTfilePred$analysisId==phenoDTfilePred$analysisId[8258],]
+  phenoDTfilePred <- phenoDTfile$predictions 
   phenoDTfilePred <- phenoDTfilePred[phenoDTfilePred$analysisId==analysisId,]
   phenoDTfilePred <- phenoDTfilePred[phenoDTfilePred$effectType=="designation",]
   phenoDTfilePred <- phenoDTfilePred[phenoDTfilePred$trait %in% trait,]
@@ -83,8 +82,7 @@ baseIndex <- function(
                          value=weights
   )
 
-  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])
-  save(idxAnalysisId,phenoDTfile,file="base.RData")
+  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])  
   newStatus <- data.frame(module="indexB", analysisId=idxAnalysisId, analysisIdName= analysisIdName)
   phenoDTfile$status <- rbind(phenoDTfile$status, newStatus[, colnames(phenoDTfile$status)] )
   modeling <- data.frame(module="indexB",
