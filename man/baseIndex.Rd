@@ -10,7 +10,8 @@ Calculates the base selection index given a table of traits and weights in trait
 \usage{
 baseIndex(
   phenoDTfile, 
-  analysisId,    
+  analysisId,   
+  analysisIdName,
   trait,  
   weights
 )
@@ -22,6 +23,9 @@ The data object structure produced from bioflow which contains data, metadata, m
 }
 \item{analysisId}{
 A numeric id to link to the predictions to be used for the selection index.
+}
+\item{analysisId}{
+A character id to personalized the analysis ID.
 }
 \item{trait}{
 A character vector with the traits that should be included in the selection index. Once the predictions are subset to the requested analysisId an additional subset for the traits of interest is performed.  
