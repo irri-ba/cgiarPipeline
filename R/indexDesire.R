@@ -89,6 +89,7 @@ indexDesire <- function(
   }))
   predictionsBind <- merge(newped,baseOrigin, by="designation", all.x=TRUE)
   predictionsBind$module <- "indexD"
+  if(length(which(predictionsBind$designation=="."))!=0){predictionsBind=predictionsBind[-which(predictionsBind$designation=="."),]}
   #########################################
   ## update databases
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)])
