@@ -21,7 +21,7 @@ equalizeTraits <- function(object, traits, newName=NULL){
   ##########################################
   ## update databases
   ## status
-  newStatus <- data.frame(module="transE", analysisId=transAnalysisId, analysisIdName=NA)
+  newStatus <- data.frame(module="transE", analysisId=transAnalysisId, analysisIdName="")
   object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   # modeling
   currentModeling <- data.frame(module="transE", analysisId=transAnalysisId, trait="inputObject", environment="general",

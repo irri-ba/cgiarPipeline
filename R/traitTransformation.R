@@ -17,17 +17,17 @@ traitTransformation <- function(
   ###################################
   # loading the dataset
   mydata <- object$data$pheno
-  # traitToRemove <- character()
+  traitToRemove <- character()
   for(k in 1:length(trait)){
     if (!trait[k] %in% colnames(mydata)){
       if(verbose){
         cat(paste0("'", trait[k], "' is not a column in the given dataset. It will be removed from trait list \n"))
       }
-      trait <- trait[-k]
-      # traitToRemove <- c(traitToRemove,trait[k])
+      # trait <- trait[-k]
+      traitToRemove <- c(traitToRemove,trait[k])
     }
   }
-  # trait <- setdiff(trait,traitToRemove)
+  trait <- setdiff(trait,traitToRemove)
   transformation <- transformation[which(traitOrig %in% trait)]
   #####################################
   # transformation
@@ -42,7 +42,7 @@ traitTransformation <- function(
   ##########################################
   ## update databases
   ## status
-  newStatus <- data.frame(module="transP", analysisId=transAnalysisId, analysisIdName=NA)
+  newStatus <- data.frame(module="transP", analysisId=transAnalysisId, analysisIdName="")
   object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   # modeling
   currentModeling <- data.frame(module="transP", analysisId=transAnalysisId,trait=trait, environment=NA,
@@ -95,7 +95,7 @@ freeFunction <- function(object, formula, newName = NULL){
   ##########################################
   ## update databases
   ## status
-  newStatus <- data.frame(module="transF", analysisId=transAnalysisId, analysisIdName=NA)
+  newStatus <- data.frame(module="transF", analysisId=transAnalysisId, analysisIdName="")
   object$status <- rbind( object$status, newStatus[,colnames(object$status)])
   # modeling
   currentModeling <- data.frame(module="transF", analysisId=transAnalysisId,trait="inputObject", environment="general",
