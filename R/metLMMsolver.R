@@ -513,7 +513,7 @@ metLMMsolver <- function(
             # Ci <- solve(mix$C)
             Cinv <- Ci[start:(start+nEffects-1),start:(start+nEffects-1)]
             if(is.matrix(Cinv)){ # when there is more than one effect
-              Cinv <- as(Cinv, Class = "dgCMatrix")
+              Cinv <- as(as(as( Cinv,  "dMatrix"), "generalMatrix"), "CsparseMatrix") # as(Cinv, Class = "dgCMatrix")
               startPev <- seq(1, length(blup), 500)
               endPev  <- c(startPev - 1, length(blup)); endPev <- endPev[-1]
               stdError <- list()
@@ -609,7 +609,8 @@ metLMMsolver <- function(
     match3 <- c(match1,match2)
     useForPreds <- names(match3)[which(match3 > 0)]
     doublematch <- table(predictionsTrait$effectType, predictionsTrait$environment)
-    interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)]))}))
+    rownames(doublematch) <- gsub(":", "_", rownames(doublematch) )
+    interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)] ))}))
     '%!in%' <- function(x,y)!('%in%'(x,y))
     if( length(useForPreds) > 0 & interceptCheck==0 ){ # only if there was designation and no main effect exist then we aggregate
       provx <- predictionsTrait
