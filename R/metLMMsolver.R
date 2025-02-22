@@ -610,7 +610,14 @@ metLMMsolver <- function(
     useForPreds <- names(match3)[which(match3 > 0)]
     doublematch <- table(predictionsTrait$effectType, predictionsTrait$environment)
     rownames(doublematch) <- gsub(":", "_", rownames(doublematch) )
-    interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)] ))}))
+    interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){
+      if(x %in% rownames(doublematch)){
+        return(
+          sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)] ))
+        )
+      }else{ return(0) }
+    }))
+    # interceptCheck <- sum(apply(data.frame(useForPreds),1,function(x){sum(as.numeric("(Intercept)" %in% colnames(doublematch)[which(doublematch[x,]>0)] ))}))
     '%!in%' <- function(x,y)!('%in%'(x,y))
     if( length(useForPreds) > 0 & interceptCheck==0 ){ # only if there was designation and no main effect exist then we aggregate
       provx <- predictionsTrait
