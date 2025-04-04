@@ -6,6 +6,7 @@ Genomic Prediction of Cross Performance Pipeline
 }
 \description{
 Performs genomic prediction of cross performance based on Werner et al. (2023) together with optimal cross selection based on Woolliams et al. (2015).
+}
 \usage{
 gpcp(
     phenoDTfile= NULL,
@@ -23,7 +24,7 @@ gpcp(
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-    \item{phenoDTfile}{
+\item{phenoDTfile}{
 The data object structure produced from bioflow which contains data, metadata, modifications and tables of results (metrics, predictions, modeling, status), in order to pick the necessary information to calculate an index.
 }
 \item{analysisId}{
@@ -57,7 +58,7 @@ The complexity and computation time of the algorithm scales up with greater numb
 Which entry types should be used in the algorithm.
 }
 }
-}
+
 \details{
 The genetic evaluation approach we use known as 'two-step' first analyze trait by trait and trial by trial to remove the spatial noise from experiments using experimental factors like blocking and spatial coordinates. Each trial is one level of the environment column (defined when the user matches the expected columns to columns present in the initial phenotypic input file). Genotype is fitted as both, fixed and random. The user defines which should be returned in the predictions table. By default genotype (designation column) predictions and their standard errors are returned.
 }
