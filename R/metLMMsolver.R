@@ -16,6 +16,7 @@ metLMMsolver <- function(
     res <- paste0(zeros, as.character(x))
     return(res)
   }
+  sommerVersion <- as.numeric(paste(strsplit(as.character(packageVersion("sommer")),"[.]")[[1]][1:2], collapse = ""))
   ##########################################
   ##########################################
   ## CONTROLS FOR MISSPECIFICATION (6 lines)
@@ -338,18 +339,52 @@ metLMMsolver <- function(
                     M <- Matrix::Diagonal(n=length(namesZ)); rownames(M) <- colnames(M) <- namesZ
                   }
                   xx = lme4breeding::redmm(x=prov[,randomTermProv2[irandom2]], M=M, nPC=0)
-                }else{xx <- sommer::isc(prov[,randomTermProv2[irandom2]])$Z}
+                }else{
+                  if(sommerVersion < 44){
+                    xx <- sommer::isc(prov[,randomTermProv2[irandom2]])$Z
+                  }else{
+                    xx <- sommer::ism(prov[,randomTermProv2[irandom2]])$Z
+                  }
+                }
                 xxList[[irandom2]] = xx # model matrix for ith effect saved
                 Mlist[[irandom2]] = M # single factor kernel M saved
                 # if irandom > 1 expand M
                 if(irandom2 > 1){
                   if(ncol(xxList[[irandom2-1]]) > 1){
-                    m1 <- sommer::dsc(xxList[[irandom2-1]])
-                  }else{m1 <- sommer::isc(xxList[[irandom2-1]][,1]) }
+                    if(sommerVersion < 44){
+                      m1 <- sommer::dsc(xxList[[irandom2-1]])
+                    }else{
+                      m1 <- sommer::dsm(xxList[[irandom2-1]])
+                    }
+                  }else{
+                    if(sommerVersion < 44){
+                      m1 <- sommer::isc(xxList[[irandom2-1]][,1]) 
+                    }else{
+                      m1 <- sommer::ism(xxList[[irandom2-1]][,1]) 
+                    }
+                    
+                  }
                   if(ncol(xxList[[irandom2]]) > 1){
-                    m2 <- sommer::isc(xx)
-                  }else{ m2 <- sommer::isc(xx[,1]) }
-                  m3 <- sommer::vsc( m1  , m2  )
+                    if(sommerVersion < 44){
+                      m2 <- sommer::isc(xx)
+                    }else{
+                      m2 <- sommer::ism(xx)
+                    }
+                    
+                  }else{ 
+                    if(sommerVersion < 44){
+                      m2 <- sommer::isc(xx[,1]) 
+                    }else{
+                      m2 <- sommer::ism(xx[,1]) 
+                    }
+                    
+                  }
+                  if(sommerVersion < 44){
+                    m3 <- sommer::vsc( m1  , m2  )
+                  }else{
+                    m3 <- sommer::vsm( m1  , m2  )
+                  }
+                  
                   environmentCol <- list()
                   for(o in 1:length(m3$Z)){environmentCol[[o]] <- rep(colnames(m3$theta)[o],nrow(M))}
                   ff <- do.call( "cbind", m3$Z )
@@ -598,7 +633,7 @@ metLMMsolver <- function(
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
       pp[["designation"]] <- means
     }
-
+    
     predictionsTrait <- do.call(rbind,pp)
     #############################################################
     ## add across env estimate for DESIGNATION effect type fitted
