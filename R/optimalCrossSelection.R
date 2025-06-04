@@ -121,6 +121,8 @@ ocs <- function(
     crossComb = t(combn(1:nrow(myrel), 2)) # all possible cross combintations
     eMP = (ebv[crossComb[,1],] +  ebv[crossComb[,2],])/2  # expected EBVs of all crosses based on # mean parent EBVs
     K <- as.matrix(myrel)
+
+    eMP <- as.numeric(eMP)
     # OCS: Determine a crossing plan
     plan = cgiarOcs::selectCrosses(nCross=forLoop[iRow,1], # number of crossed to be identified using OCS
                                    targetAngle=((forLoop[iRow,2])*pi)/180, # 30 degrees in radians
@@ -169,7 +171,8 @@ ocs <- function(
         provPredictions <- provPredictions[which(provPredictions$trait == iTrait), ]
         provPredictions <- provPredictions[which(provPredictions[,"designation"] %in% common),]
         ebv2 <- data.frame(provPredictions[,c("predictedValue")]); rownames(ebv2) <- provPredictions[,"designation"]
-        eMPtrait = (ebv2[crossPlan[ ,1],] +  ebv2[crossPlan[ ,2],])/2  #
+        eMPtrait = (ebv2[crossPlan[ ,1],] +  ebv2[crossPlan[ ,2],])/2
+        eMPtrait = as.numeric(eMPtrait)
 
         traitPredictions[[iTrait]] <- data.frame(module="ocs",  analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
                                                  trait=iTrait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
