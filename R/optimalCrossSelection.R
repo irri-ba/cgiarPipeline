@@ -1,6 +1,7 @@
 ocs <- function(
     phenoDTfile= NULL, # analysis to be picked from predictions database
     analysisId=NULL,
+    analysisIdgeno=NULL,
     relDTfile= NULL, # "nrm", "grm", "both"
     trait= NULL, # per trait
     environment="across",
@@ -64,8 +65,19 @@ ocs <- function(
     )
   }
   if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
-    M <- phenoDTfile$data$geno
+
+    qas<-which( names(phenoDTfile$data$geno_imp)==analysisIdgeno )
+    ## MARKER KERNEL
+    M <- as.matrix(phenoDTfile$data$geno_imp[qas]) # in form of covariates
     if(is.null(M)){stop("Markers are not available for this dataset. OCS requires pedigree or markers to work. Please upload any of these in the data retrieval tabs.", call. = FALSE)}
+
+    if(length(qas) > 0){
+      if(length(which(is.na(M))) > 0){M <- apply(M,2,sommer::imputev)}
+    }else{
+      missing <- apply(M,2,sommer::propMissing)
+      M <- apply(M[,which(missing < 0.9)],2,sommer::imputev)
+    }
+
     if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
       A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
     }else{ A <- sommer::A.mat(M) };  M <- NULL

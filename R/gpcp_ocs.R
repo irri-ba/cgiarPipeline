@@ -1,6 +1,7 @@
 gpcp <- function(
     phenoDTfile= NULL, # analysis to be picked from predictions database
     analysisId=NULL,
+    analysisIdgeno=NULL,
     relDTfile= NULL, # "nrm", "grm", "both"
     trait= NULL, # per trait
     environment="across",
@@ -63,13 +64,13 @@ gpcp <- function(
   }
 
   if(! is.null(relDTfile)){ # we need to calculate backsolving matrices
-    M <- phenoDTfile$data$geno
+
+    qas<-which( names(phenoDTfile$data$geno_imp)==analysisIdgeno )
+    ## MARKER KERNEL
+    M <- as.matrix(phenoDTfile$data$geno_imp[qas]) # in form of covariates
     if(is.null(M)){stop("Markers are not available for this dataset. GPCP requires markers to work", call. = FALSE)}
 
-    qas <- which( phenoDTfile$status$module == "qaGeno" ); qas <- qas[length(qas)]
     if(length(qas) > 0){
-      modificationsMarkers <- phenoDTfile$modifications$geno[which(phenoDTfile$modifications$geno$analysisId %in% phenoDTfile$status$analysisId[qas] ),]
-      M <- cgiarBase::applyGenoModifications(M=M, modifications=modificationsMarkers)
       if(length(which(is.na(M))) > 0){M <- apply(M,2,sommer::imputev)}
     }else{
       missing <- apply(M,2,sommer::propMissing)
