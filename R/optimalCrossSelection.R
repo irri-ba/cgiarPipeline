@@ -64,11 +64,18 @@ ocs <- function(
                          sireCol = paramsPed[paramsPed$parameter=="father","value"]
     )
   }
+
   if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
 
     qas<-which( names(phenoDTfile$data$geno_imp)==analysisIdgeno )
+
+    if (length(qas) == 0)
+      stop("Genotype version ", analysisIdgeno, " not found in geno_imp.", call. = FALSE)
+
+    gl <- phenoDTfile$data$geno_imp[[ qas[1] ]]
     ## MARKER KERNEL
-    M <- as.matrix(phenoDTfile$data$geno_imp[qas]) # in form of covariates
+    M  <- adegenet::tab(gl, NA.method = "mean")
+
     if(is.null(M)){stop("Markers are not available for this dataset. OCS requires pedigree or markers to work. Please upload any of these in the data retrieval tabs.", call. = FALSE)}
 
     if(length(qas) > 0){
@@ -122,7 +129,6 @@ ocs <- function(
     eMP = (ebv[crossComb[,1],] +  ebv[crossComb[,2],])/2  # expected EBVs of all crosses based on # mean parent EBVs
     K <- as.matrix(myrel)
 
-    eMP <- as.numeric(eMP)
     # OCS: Determine a crossing plan
     plan = cgiarOcs::selectCrosses(nCross=forLoop[iRow,1], # number of crossed to be identified using OCS
                                    targetAngle=((forLoop[iRow,2])*pi)/180, # 30 degrees in radians
@@ -172,7 +178,6 @@ ocs <- function(
         provPredictions <- provPredictions[which(provPredictions[,"designation"] %in% common),]
         ebv2 <- data.frame(provPredictions[,c("predictedValue")]); rownames(ebv2) <- provPredictions[,"designation"]
         eMPtrait = (ebv2[crossPlan[ ,1],] +  ebv2[crossPlan[ ,2],])/2
-        eMPtrait = as.numeric(eMPtrait)
 
         traitPredictions[[iTrait]] <- data.frame(module="ocs",  analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
                                                  trait=iTrait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),

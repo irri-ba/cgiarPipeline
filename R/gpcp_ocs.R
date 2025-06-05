@@ -66,8 +66,14 @@ gpcp <- function(
   if(! is.null(relDTfile)){ # we need to calculate backsolving matrices
 
     qas<-which( names(phenoDTfile$data$geno_imp)==analysisIdgeno )
+
+    if (length(qas) == 0)
+      stop("Genotype version ", analysisIdgeno, " not found in geno_imp.", call. = FALSE)
+
+    gl <- phenoDTfile$data$geno_imp[[ qas[1] ]]
     ## MARKER KERNEL
-    M <- as.matrix(phenoDTfile$data$geno_imp[qas]) # in form of covariates
+    M  <- adegenet::tab(gl, NA.method = "mean")
+
     if(is.null(M)){stop("Markers are not available for this dataset. GPCP requires markers to work", call. = FALSE)}
 
     if(length(qas) > 0){
