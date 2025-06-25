@@ -456,12 +456,9 @@ metASREML <- function(phenoDTfile = NULL,
         maxit = maxIters,
         weigth = w,
         family = family_arg,
+	residual = ~idv(units),
         envir = .GlobalEnv
-      )
-      if(mix$vparameters["units!R"]!=1){
-	      mix$vparameters["units!R"] <- 1
-	      mix <- update(mix)
-      }
+      )      
       #summary(mix)
     }, error = function(e) {
       paste("❌ Error to adjust model:", e$message)
