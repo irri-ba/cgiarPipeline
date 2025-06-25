@@ -65,21 +65,27 @@ rggMackay <- function(
   # define wether we should deregress or not
   modelingInput <- phenoDTfile$modeling
   modelingInput <- modelingInput[which(modelingInput$analysisId == analysisId),]
-  if(unique(modelingInput$module) %in% c("mta","mtaFlex") ){
-    designationEffectType <- unique(modelingInput[which(modelingInput$parameter == "designationEffectType"),"value"])
-    if(any(designationEffectType %in% c("BLUP","GBLUP","PBLUP","SSBLUP") )){
-      deregress=TRUE
-    }else{ # BLUE
-      deregress=FALSE
-    }
-  }else{ # mtaLmms
-    designationEffectType <- unique(modelingInput[modelingInput$parameter == "kernels","value"])
-    if(any(designationEffectType %in% c("pedigree","geno") )){
-      deregress=TRUE
-    }else{ # BLUE
-      deregress=FALSE
-    }
+  designationEffectType <- modelingInput[which(modelingInput$parameter == "randomFormula"),"value"]
+  if(length(grep("designation", designationEffectType)) > 0){
+    deregress=TRUE
+  }else{ # BLUE
+    deregress=FALSE
   }
+  # if(unique(modelingInput$module) == "sta"){
+  #   designationEffectType <- modelingInput[which(modelingInput$parameter == "randomFormula"),"value"]
+  #   if(length(grep("designation", designationEffectType)) > 0){
+  #     deregress=TRUE
+  #   }else{ # BLUE
+  #     deregress=FALSE
+  #   }
+  # }else{ # mtaLmms
+  #   designationEffectType <- modelingInput[which(modelingInput$parameter == "randomFormula"),"value"]
+  #   if(length(grep("grp\\(designation\\)", designationEffectType)) > 0){
+  #     deregress=TRUE
+  #   }else{ # BLUE
+  #     deregress=FALSE
+  #   }
+  # }
 
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
