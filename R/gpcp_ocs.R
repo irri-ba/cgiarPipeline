@@ -168,11 +168,13 @@ gpcp <- function(
   for(t in 1:length(traits_in_mta)){
     blupA = GPCP_list$BlupA[GPCP_list$BlupA$trait == traits_in_mta[t],]
     blupA = blupA[match(rownames(M),blupA$designation),]
+    Amat = Amat[,blupA$designation]
 
     add_eff[[t]] = as.vector(Amat %*% matrix(blupA$predictedValue))
 
     blupD = GPCP_list$BlupD[GPCP_list$BlupD$trait == traits_in_mta[t],]
     blupD = blupD[match(rownames(M),blupD$designation),]
+    Dmat = Dmat[,blupD$designation]
 
     fCoef = GPCP_list$f[GPCP_list$f$trait == traits_in_mta[t],]
     fCoef = fCoef$predictedValue / ncol(M)
