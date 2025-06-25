@@ -459,6 +459,9 @@ metASREML <- function(phenoDTfile = NULL,
         envir = .GlobalEnv
       )
       #summary(mix)
+      mix$param["R!variance", "component"] <- 1
+	    mix$param["R!variance", "status"] <- "F"
+	    mix <- update(mix)
     }, error = function(e) {
       paste("❌ Error to adjust model:", e$message)
     })
