@@ -409,7 +409,7 @@ metASREML <- function(phenoDTfile = NULL,
     #mydataSub$w <- 1 / (mydataSub$stdError^2) # add weights column
     w <- 1 / (mydataSub$stdError^2) # add weights column
     # warnin messages in weights use
-    message("  Using weights in the analysis. Residual variance will be fixed to 1.")
+    message(" Using weights in the analysis. Residual variance will be fixed to 1. ")
     
     #trasform to factor variables
     labfactor <- c(
@@ -456,16 +456,16 @@ metASREML <- function(phenoDTfile = NULL,
         maxit = maxIters,
         weigth = w,
         family = family_arg,
+	residual = ~idv(units),
         envir = .GlobalEnv
-      )
+      )      
       #summary(mix)
-      mix$param["R!variance", "component"] <- 1
-	    mix$param["R!variance", "status"] <- "F"
-	    mix <- update(mix)
     }, error = function(e) {
       paste("❌ Error to adjust model:", e$message)
     })
   
+  
+
     update_until_converged <- function(model, max_updates = 10, verbose = TRUE) {
       count <- 0
       while (!model$converge && count < max_updates) {
@@ -607,14 +607,16 @@ metASREML <- function(phenoDTfile = NULL,
     #Random terms interaction
     subgroupInt = c()
     only2 = which(lapply(randomTerm, length) == 2)
-    for (sb2 in 1:length(only2)) {
-      ed = all(randomTerm[[only2[sb2]]] %in% c("environment", "designation"))
-      if (ed == T) {
-        subgroupInt[sb2] = paste0(
-          x_option2(covMod[[only2[sb2]]][1], randomTerm[[only2[sb2]]][1], nFA[[only2[sb2]]]),
-          ":",
-          x_option2(covMod[[only2[sb2]]][2], randomTerm[[only2[sb2]]][2], nFA[[only2[sb2]]])
-        )
+    if(length(only2)!=0){
+      for (sb2 in 1:length(only2)) {
+        ed = all(randomTerm[[only2[sb2]]] %in% c("environment", "designation"))
+        if (ed == T) {
+          subgroupInt[sb2] = paste0(
+            x_option2(covMod[[only2[sb2]]][1], randomTerm[[only2[sb2]]][1], nFA[[only2[sb2]]]),
+            ":",
+            x_option2(covMod[[only2[sb2]]][2], randomTerm[[only2[sb2]]][2], nFA[[only2[sb2]]])
+          )
+        }
       }
     }
     
