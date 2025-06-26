@@ -454,7 +454,7 @@ metASREML <- function(phenoDTfile = NULL,
         data = mydataSub,
         na.action = na.method(x='include', y='include'),
         maxit = maxIters,
-        weigth = w,
+        weigths = w,
         family = family_arg,
 	residual = ~idv(units),
         envir = .GlobalEnv
