@@ -26,7 +26,8 @@ gpcp <- function(
 
   ############################
   # loading the dataset
-  if(is.null(phenoDTfile$GPCP)){
+  if(is.null(which(data()$predictions$effectType=="designationA")) && is.null(which(data()$predictions$effectType=="designationD")) && is.null(which(data()$predictions$effectType=="inbreeding"))){
+  #if(is.null(phenoDTfile$GPCP)){
     stop("GPCP is only possible if the MTA analysis is done using model 'Main effects (A+D)' ")
 
   }else{
@@ -132,7 +133,14 @@ gpcp <- function(
 
   ##################################################
   #Get marker effects
-  GPCP_list = phenoDTfile$GPCP
+  #GPCP_list = phenoDTfile$GPCP
+  GPCP_list <- list()
+  GPCP_list$BlupA<-phenoDTfile$predictions[which(phenoDTfile$predictions$effectType=="designationA"),]
+  GPCP_list$BlupD<-phenoDTfile$predictions[which(phenoDTfile$predictions$effectType=="designationD"),]
+  GPCP_list$f<-phenoDTfile$predictions[which(phenoDTfile$predictions$effectType=="inbreeding"),]
+  uno=phenoDTfile$modeling[phenoDTfile$modeling$module=="indexD",]
+  uno=uno[which(uno$environment=="(Intercept)"),]
+  GPCP_list$index_weights=uno[which(uno$parameter=="weight"),]
 
   # make sure you have same blups and genotypes
 
@@ -168,11 +176,13 @@ gpcp <- function(
   for(t in 1:length(traits_in_mta)){
     blupA = GPCP_list$BlupA[GPCP_list$BlupA$trait == traits_in_mta[t],]
     blupA = blupA[match(rownames(M),blupA$designation),]
+    Amat = Amat[,blupA$designation]
 
     add_eff[[t]] = as.vector(Amat %*% matrix(blupA$predictedValue))
 
     blupD = GPCP_list$BlupD[GPCP_list$BlupD$trait == traits_in_mta[t],]
     blupD = blupD[match(rownames(M),blupD$designation),]
+    Dmat = Dmat[,blupD$designation]
 
     fCoef = GPCP_list$f[GPCP_list$f$trait == traits_in_mta[t],]
     fCoef = fCoef$predictedValue / ncol(M)
@@ -181,7 +191,7 @@ gpcp <- function(
 
   }
 
-  w = GPCP_list$index_weights$value
+  w = as.numeric(GPCP_list$index_weights$value)
 
   #Weighted additive and dominance effects:
   ai = Map('*',add_eff, w)

@@ -315,8 +315,8 @@ metLMMsolver <- function(
       prov <- prov[which(prov$environment %in% goodFieldsMean),]
 
       #Add inbreeding coefficient to prov
-      if ("genoD" %in% covars & (!"f" %in% colnames(prov))) {
-        prov$f <- f[match(prov$designation, names(f))]
+      if ("genoD" %in% covars & (!"inbreeding" %in% colnames(prov))) {
+        prov$inbreeding <- f[match(prov$designation, names(f))]
       }
 
       fixedTermProv <- fixedTerm
@@ -870,19 +870,8 @@ metLMMsolver <- function(
     avgDes$stdError <- rowMeans(cbind(desA$stdError, desD$stdError), na.rm = TRUE)
     avgDes$effectType <- "designation"
 
-    # Drop original designationA and designationD
-    predictionsBind <- predictionsBind[!(predictionsBind$effectType %in% c("designationA", "designationD")), ]
-
     # Add the averaged designation rows
     predictionsBind <- rbind(predictionsBind, avgDes)
-
-    #Create GPCP exports
-    GPCP_list <- list(
-      BlupA = desA[, c("designation", "trait", "predictedValue")],
-      BlupD = desD[, c("designation", "trait", "predictedValue")],
-      f = predictionsBind[predictionsBind$effectType == "f", c("trait", "predictedValue")]
-    )
-    phenoDTfile$GPCP <- GPCP_list
   }
 
 
