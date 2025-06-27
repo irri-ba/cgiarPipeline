@@ -26,7 +26,8 @@ gpcp <- function(
 
   ############################
   # loading the dataset
-  if(is.null(phenoDTfile$GPCP)){
+  if(is.null(which(data()$predictions$effectType=="designationA")) && is.null(which(data()$predictions$effectType=="designationD")) && is.null(which(data()$predictions$effectType=="inbreeding"))){
+  #if(is.null(phenoDTfile$GPCP)){
     stop("GPCP is only possible if the MTA analysis is done using model 'Main effects (A+D)' ")
 
   }else{
@@ -132,7 +133,14 @@ gpcp <- function(
 
   ##################################################
   #Get marker effects
-  GPCP_list = phenoDTfile$GPCP
+  #GPCP_list = phenoDTfile$GPCP
+  GPCP_list <- list()
+  GPCP_list$BlupA<-phenoDTfile$predictions[which(phenoDTfile$predictions$effectType=="designationA"),]
+  GPCP_list$BlupD<-phenoDTfile$predictions[which(phenoDTfile$predictions$effectType=="designationD"),]
+  GPCP_list$f<-phenoDTfile$predictions[which(phenoDTfile$predictions$effectType=="inbreeding"),]
+  uno=phenoDTfile$modeling[phenoDTfile$modeling$module=="indexD",]
+  uno=uno[which(uno$environment=="(Intercept)"),]
+  GPCP_list$index_weights=uno[which(uno$parameter=="weight"),]
 
   # make sure you have same blups and genotypes
 
@@ -151,6 +159,10 @@ gpcp <- function(
   if(!is.null(GPCP_list$index_weights)){
     traits_in_index = unique(GPCP_list$index_weights$trait)
 
+    if(any(grepl("scaled",traits_in_index))){
+      traits_in_index = gsub("_scaled","",traits_in_index)
+    }
+
     GPCP_list$BlupA = GPCP_list$BlupA[GPCP_list$BlupA$trait %in% traits_in_index,]
     GPCP_list$BlupD = GPCP_list$BlupD[GPCP_list$BlupD$trait %in% traits_in_index,]
     GPCP_list$f = GPCP_list$f[GPCP_list$f$trait %in% traits_in_index,]
@@ -162,6 +174,7 @@ gpcp <- function(
   }
 
   traits_in_mta = unique(GPCP_list$f$trait)
+  print(traits_in_mta)
 
   add_eff = list()
   dom_eff = list()
@@ -183,7 +196,7 @@ gpcp <- function(
 
   }
 
-  w = GPCP_list$index_weights$value
+  w = as.numeric(GPCP_list$index_weights$value)
 
   #Weighted additive and dominance effects:
   ai = Map('*',add_eff, w)
@@ -261,6 +274,10 @@ gpcp <- function(
     if(length(otherTraits) > 0){ # if there's more traits in the file, add the value of the crosses for those traits
       traitPredictions <- list()
       for(iTrait in otherTraits){ # iTrait <- otherTraits[1]
+
+        if(grepl("scaled",iTrait)){
+          iTrait = gsub("_scaled","",iTrait)
+        }
 
         provPredictions <- phenoDTfile$predictions
         provPredictions <- provPredictions[which(provPredictions$analysisId %in% analysisIdOtherTraits),]
