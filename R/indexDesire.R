@@ -104,11 +104,5 @@ indexDesire <- function(
                           parameter= c("scaled", rep("entryTypeToUse",length(entryTypeToUse)) ), value= c(scaled, entryTypeToUse))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling1[, colnames(phenoDTfile$modeling)],modeling2[, colnames(phenoDTfile$modeling)])
 
-  if ("GPCP" %in% names(phenoDTfile)) {
-    GPCP_list <- phenoDTfile$GPCP
-    GPCP_list$index_weights <- data.frame(trait = trait, value = b)
-    phenoDTfile$GPCP <- GPCP_list
-  }
-
   return(phenoDTfile)
 }

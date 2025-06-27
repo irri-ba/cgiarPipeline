@@ -159,6 +159,10 @@ gpcp <- function(
   if(!is.null(GPCP_list$index_weights)){
     traits_in_index = unique(GPCP_list$index_weights$trait)
 
+    if(any(grepl("scaled",traits_in_index))){
+      traits_in_index = gsub("_scaled","",traits_in_index)
+    }
+
     GPCP_list$BlupA = GPCP_list$BlupA[GPCP_list$BlupA$trait %in% traits_in_index,]
     GPCP_list$BlupD = GPCP_list$BlupD[GPCP_list$BlupD$trait %in% traits_in_index,]
     GPCP_list$f = GPCP_list$f[GPCP_list$f$trait %in% traits_in_index,]
@@ -170,6 +174,7 @@ gpcp <- function(
   }
 
   traits_in_mta = unique(GPCP_list$f$trait)
+  print(traits_in_mta)
 
   add_eff = list()
   dom_eff = list()
@@ -269,6 +274,10 @@ gpcp <- function(
     if(length(otherTraits) > 0){ # if there's more traits in the file, add the value of the crosses for those traits
       traitPredictions <- list()
       for(iTrait in otherTraits){ # iTrait <- otherTraits[1]
+
+        if(grepl("scaled",iTrait)){
+          iTrait = gsub("_scaled","",iTrait)
+        }
 
         provPredictions <- phenoDTfile$predictions
         provPredictions <- provPredictions[which(provPredictions$analysisId %in% analysisIdOtherTraits),]
