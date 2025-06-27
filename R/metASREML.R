@@ -427,13 +427,13 @@ metASREML <- function(phenoDTfile = NULL,
       "year",
       "location"
     )
-    tranfactfixed <- which(unlist(fixedTerm) %in% labfactor == T)
-    tranfactrandom <- which(unique(unlist(randomTerm)) %in% labfactor == T)
+    tranfactfixed <- which(unique(unlist(fixedTerm)) %in% labfactor == T)    
     if (length(tranfactfixed) != 0) {
-      mydataSub[, unlist(fixedTerm)[tranfactfixed]] = lapply(mydataSub[unlist(fixedTerm)[tranfactfixed]], as.factor)
+      mydataSub[, unique(unlist(fixedTerm))[tranfactfixed]] = lapply(mydataSub[unique(unlist(fixedTerm))[tranfactfixed]], as.factor)
     }
+    tranfactrandom <- which(unique(unlist(randomTerm)) %in% labfactor == T)
     if (length(tranfactrandom) != 0) {
-      mydataSub[, unique(unlist(randomTerm))[tranfactrandom]] = lapply(mydataSub[unlist(randomTerm)[tranfactrandom]], as.factor)
+      mydataSub[, unique(unlist(randomTerm))[tranfactrandom]] = lapply(mydataSub[unique(unlist(randomTerm))[tranfactrandom]], as.factor)
     }
     
     asreml::asreml.options(workspace = 30e7,pworkspace = 200e7,trace = T,ai.sing = T)
@@ -454,7 +454,7 @@ metASREML <- function(phenoDTfile = NULL,
         data = mydataSub,
         na.action = na.method(x='include', y='include'),
         maxit = maxIters,
-        weigth = w,
+        weigths = w,
         family = family_arg,
 	residual = ~idv(units),
         envir = .GlobalEnv
