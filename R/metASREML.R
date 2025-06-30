@@ -55,7 +55,7 @@ metASREML <- function(phenoDTfile = NULL,
     }
   }
   if (is.null(traitFamily)) {
-    traitFamily <- rep("asr_gaussian(link = 'identity')", length(trait))
+    traitFamily <- rep("asr_gaussian(link = 'identity', dispersion = 1.0)", length(trait))
   }
   if (length(traitFamily) != length(trait)) {
     stop("Trait distributions should have the same length than traits to be analyzed.",
@@ -454,9 +454,8 @@ metASREML <- function(phenoDTfile = NULL,
         data = mydataSub,
         na.action = na.method(x='include', y='include'),
         maxit = maxIters,
-        weigths = w,
-        family = family_arg,
-	residual = ~idv(units),
+        weights = w,
+        family = family_arg,	
         envir = .GlobalEnv
       )      
       #summary(mix)
