@@ -174,7 +174,6 @@ gpcp <- function(
   }
 
   traits_in_mta = unique(GPCP_list$f$trait)
-  print(traits_in_mta)
 
   add_eff = list()
   dom_eff = list()
