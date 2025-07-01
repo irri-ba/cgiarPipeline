@@ -37,7 +37,7 @@ gwas <- function (
     }
   }
   
-  entryType <- unique(phenoDTfile$predictions[phenoDTfile$predictions$module %in% c("sta","mta"),"entryType"])
+  entryType <- unique(phenoDTfile$predictions[phenoDTfile$predictions$module %in% c("sta","mtaLmms"),"entryType"])
   entryType <- ifelse(length(entryType) > 1, sort(entryType)[1], entryType)
   
   for(iTrait in trait) {
