@@ -1036,36 +1036,42 @@ metASREML <- function(phenoDTfile = NULL,
   )
   if (any(desigName %in% predictionsBind$effectType)) {
     more2 = desigName[which(desigName %in% predictionsBind$effectType == T)]
-    avgDes <- predictionsBind[which(predictionsBind$effectType == more2[1]), ]
-    if (length(more2) > 1) {
+    avgDes=list()
+    Bytraits=unique(predictionsBind$trait)
+    for(tt in 1:length(Bytraits)){
+      predictionsBindtmp=subset(predictionsBind,predictionsBind$trait==Bytraits[tt])
+      avgDes[[tt]] <- predictionsBindtmp[which(predictionsBindtmp$effectType == more2[1]), ]
+      if (length(more2) > 1) {
       # Filtrar
-      df_sub <- predictionsBind[predictionsBind$effectType %in% more2, ]
-      avgDes$predictedValue <- aggregate(
-        predictedValue ~ designation,
-        data = df_sub,
-        FUN = function(x)
+        df_sub <- predictionsBindtmp[predictionsBindtmp$effectType %in% more2, ]
+        avgDes[[tt]]$predictedValue <- aggregate(
+          predictedValue ~ designation,
+          data = df_sub,
+          FUN = function(x)
           mean(x, na.rm = TRUE)
-      )[, 2]
-      avgDes$stdError <- aggregate(
-        stdError ~ designation,
-        data = df_sub,
-        FUN = function(x)
-          mean(x, na.rm = TRUE)
-      )[, 2]
-      avgDes$reliability <- aggregate(
-        reliability ~ designation,
-        data = df_sub,
-        FUN = function(x)
-          mean(x, na.rm = TRUE)
-      )[, 2]
-      avgDes$effectType <- "designation"
-    } else{
-      avgDes$effectType <- "designation"
-    }
+        )[, 2]
+        avgDes[[tt]]$stdError <- aggregate(
+          stdError ~ designation,
+          data = df_sub,
+          FUN = function(x)
+            mean(x, na.rm = TRUE)
+        )[, 2]
+        avgDes[[tt]]$reliability <- aggregate(
+          reliability ~ designation,
+          data = df_sub,
+          FUN = function(x)
+            mean(x, na.rm = TRUE)
+        )[, 2]
+        avgDes[[tt]]$effectType <- "designation"
+      } else{
+        avgDes[[tt]]$effectType <- "designation"
+      }
+    }  
+    avgDes=do.call(rbind,avgDes)
     # Add the averaged designation rows
     predictionsBind <- rbind(predictionsBind, avgDes)
   }
-  
+    
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[, colnames(phenoDTfile$predictions)])
   newStatus <- data.frame(module = "mtaAsr",
                           analysisId = mtaAnalysisId,
