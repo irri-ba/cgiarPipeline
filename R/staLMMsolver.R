@@ -328,6 +328,7 @@ staLMM <- function(
                       rownames(ss) <- ss$VarComp
                       vg <- ss[iGenoUnit,2]; vr <- ss["residual",2]
                       cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
+                      cv2 <- (sqrt(vr)/mean(as.numeric(mydataSub[,iTrait]),na.rm=TRUE))*100
                       ## reliability
                       A <- diag(nrow(pev))
                       G <- A*vg # G matrix
@@ -339,10 +340,10 @@ staLMM <- function(
                       predictionsList[[counter]] <- pp
                       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                    data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                              parameter=paste(c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), iGenoUnit, sep="_"),
-                                                              method= paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML", nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),
-                                                              value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                              stdError=c(NA,NA,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(NA,nrow(ss)), NA)
+                                                              parameter=c(paste(c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), iGenoUnit, sep="_"),"CV_environment"),
+                                                              method= c(paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML", nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),"sqrt(MSE)/GM"),
+                                                              value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE),cv2),
+                                                              stdError=c(NA,NA,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(NA,nrow(ss)), NA, NA)
                                                    )
                       )
                       counter=counter+1
@@ -361,10 +362,10 @@ staLMM <- function(
                       cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
                       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                    data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                              parameter=paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),
-                                                              method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
-                                                              value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                              stdError=c(NA,NA,NA,NA, NA, NA)
+                                                              parameter=c(paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),"CV_environment"),
+                                                              method=c(paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-"),"sqrt(MSE)/GM") ,
+                                                              value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE),0 ),
+                                                              stdError=c(NA,NA,NA,NA, NA, NA, NA)
                                                    )
                       )
                       currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField,
@@ -423,6 +424,7 @@ staLMM <- function(
                     rownames(ss) <- ss$VarComp
                     vg <- ss[iGenoUnit,2]; vr <- ss["residual",2]
                     cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
+                    cv2 <- (sqrt(vr)/mean(as.numeric(mydataSub[,iTrait]),na.rm=TRUE))*100
                     ## reliability
                     A <- diag(nrow(pev))
                     G <- A*vg # G matrix
@@ -432,10 +434,10 @@ staLMM <- function(
                     badRels2 <- which(pp$reliability < 0); if(length(badRels2) > 0){pp$reliability[badRels2] <- 0}
                     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                  data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                            parameter=paste( c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), iGenoUnit, sep="_"),
-                                                            method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML",nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),
-                                                            value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                            stdError=c(NA,NA,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(NA, nrow(ss)), NA)
+                                                            parameter=c(paste( c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), iGenoUnit, sep="_"),"CV_environment"),
+                                                            method=c(paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML",nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),"sqrt(MSE)/GM"),
+                                                            value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE), cv2),
+                                                            stdError=c(NA,NA,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(NA, nrow(ss)), NA, NA)
                                                  )
                     )
                     predictionsList[[counter]] <- pp
@@ -458,10 +460,10 @@ staLMM <- function(
                   cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
                   phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                          parameter=paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),
-                                                          method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
-                                                          value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                          stdError=c(NA,NA,NA,NA, NA, NA)
+                                                          parameter=c(paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),"CV_environment"),
+                                                          method=c(paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-"),"sqrt(MSE)/GM"),
+                                                          value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE),0 ),
+                                                          stdError=c(NA,NA,NA,NA, NA, NA, NA)
                                                )
                   )
                   currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField,
@@ -489,9 +491,9 @@ staLMM <- function(
                 cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                        parameter= paste( c("plotH2","CV", "r2","V_designation","V_residual", "mean"), iGenoUnit, sep="_"),
-                                                        method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), sep = "-") ,
-                                                        value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(NA,NA,NA,NA,NA,NA)
+                                                        parameter= c(paste( c("plotH2","CV", "r2","V_designation","V_residual", "mean"), iGenoUnit, sep="_"),"CV_environment"),
+                                                        method=c(paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), sep = "-"),"sqrt(MSE)/GM") ,
+                                                        value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE),0 ), stdError=c(NA,NA,NA,NA,NA,NA,NA)
                                              )
                 )
                 currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), value=c("None","None","None","None","mean"))
@@ -529,9 +531,9 @@ staLMM <- function(
 
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                            data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                      parameter= paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_") ,
-                                                      method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
-                                                      value=c(0, cv, 0,0,0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(NA,NA,NA,NA, NA, NA)
+                                                      parameter= c(paste( c("plotH2","CV", "r2","V_designation","V_residual","mean"), iGenoUnit, sep="_"),"CV_environment") ,
+                                                      method=c(paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-"),"sqrt(MSE)/GM") ,
+                                                      value=c(0, cv, 0,0,0, mean(pp$predictedValue,na.rm=TRUE),0), stdError=c(NA,NA,NA,NA, NA, NA,NA)
                                            )
               )
 

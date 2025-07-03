@@ -296,7 +296,7 @@ metLMMsolver <- function(
   if(verbose){message("Building trait datasets.")}
   metrics <- phenoDTfile$metrics
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
-  myDataTraits <- fixedTermTrait <- randomTermTrait <- groupingTermTrait <- Mtrait <- envsTrait <- entryTypesTrait <- list()
+  myDataTraits <- fixedTermTrait <- randomTermTrait <- groupingTermTrait <- Mtrait <- envsTrait <- entryTypesTrait <- envCount <- list()
   for(iTrait in trait){ # iTrait = trait[1]
     # filter for records available
     vt <- which(mydata[,"trait"] == iTrait)
@@ -313,6 +313,7 @@ metLMMsolver <- function(
       pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2", apply(expand.grid( c("mean"), c("designation","mother","father")),1,function(f){paste(f,collapse = "_")}) ) ),]
       goodFieldsMean <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > meanLB[iTrait]) & (pipeline_metricsSub$value < meanUB[iTrait])),"environment"])
       prov <- prov[which(prov$environment %in% goodFieldsMean),]
+      envCount[[iTrait]] <- unique(prov$environment)
 
       #Add inbreeding coefficient to prov
       if ("genoD" %in% covars & (!"inbreeding" %in% colnames(prov))) {
@@ -814,11 +815,14 @@ metLMMsolver <- function(
       predictionsTrait <- rbind(predictionsTrait, provx[,colnames(predictionsTrait)])
     }
     #
+    predSta <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId &
+                                               phenoDTfile$predictions$trait == iTrait &
+                                               phenoDTfile$predictions$environment %in% envCount[[iTrait]]),]
     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                  data.frame(module="mtaLmms",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
                                             parameter=c("Var_residual","nEnv","nEntries"),
                                             method=c("REML","n","n"),
-                                            value=c( Ve, length(goodFields), length(unique(predictionsTrait$designation)) ),
+                                            value=c( Ve, length(envCount[[iTrait]]), length(unique(predSta$designation)) ),
                                             stdError=c(NA,NA,NA) )
     )
     predictionsList[[iTrait]] <- predictionsTrait
