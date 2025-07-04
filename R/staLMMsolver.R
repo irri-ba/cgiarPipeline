@@ -310,9 +310,21 @@ staLMM <- function(
                       predictedValue <-  mixRandom$coefMME[mixRandom$ndxCoefficients[[iGenoUnit]]] +  mixRandom$coefMME[mixRandom$ndxCoefficients$`(Intercept)`]
                       dims <- mixRandom$EDdf
                       start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) + 1 # we add the one when is random
-                      pev <- as.matrix(solve(mixRandom$C))[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
-                      stdError <- stdErrorRandom <- (sqrt(diag(pev)))
-
+                      
+                      Cinv <- as.matrix(solve(mixRandom$C))
+                      pev <- Cinv[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
+                      
+                      #Build X
+                      idxIntercept <- mixRandom$ndxCoefficients$`(Intercept)`   # single position
+                      idxGenos     <- mixRandom$ndxCoefficients[[iGenoUnit]]    # one per genotype
+                      
+                      p <- length(mixRandom$coefMME)                 # total β + u length
+                      Xpred <- matrix(0, nrow = length(idxGenos), ncol = p)
+                      Xpred[ ,idxIntercept] <- 1                                # intercept column
+                      for (j in seq_along(idxGenos)) Xpred[j, idxGenos[j]] <- 1  # the right uᵢ
+                      
+                      stdError <- stdErrorRandom <- sqrt(diag(Xpred %*% Cinv %*% t(Xpred))) # use XC⁻¹X'
+                      
                       badSEs <- which( stdError < (sd(predictedValue, na.rm = TRUE)/100) )
                       if(length(badSEs) > 0){stdError[badSEs] <- sd(predictedValue, na.rm = TRUE)}
 
@@ -392,9 +404,20 @@ staLMM <- function(
                       if(length(shouldBeOne) > 0){predictedValue[1] = mixFixed$coefMME[mixFixed$ndxCoefficients$`(Intercept)`]} # adjust the value for first entry
                       dims <- mixFixed$EDdf
                       start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) # we don't add a one because we need the intercept
-                      pev <- as.matrix(solve(mixFixed$C))[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
-                      stdError <- sqrt(diag(pev))
-                      stdError[1] <- mean(stdError[-1])
+                      
+                      Cinv <- as.matrix(solve(mixFixed$C))
+                     
+                      #Build X
+                      idxIntercept <- mixFixed$ndxCoefficients$`(Intercept)`   # single position
+                      idxGenos     <- mixFixed$ndxCoefficients[[iGenoUnit]]    # one per genotype
+                      
+                      p <- length(mixFixed$coefMME)                 # total β + u length
+                      Xpred <- matrix(0, nrow = length(idxGenos), ncol = p)
+                      Xpred[ ,idxIntercept] <- 1                                # intercept column
+                      for (j in seq_along(idxGenos)) Xpred[j, idxGenos[j]] <- 1  # the right uᵢ
+                      
+                      stdError <- sqrt(diag(Xpred %*% Cinv %*% t(Xpred))) # use XC⁻¹X'
+                      
                       badSEs <- which( stdError < (sd(predictedValue, na.rm = TRUE)/100) )
                       if(length(badSEs) > 0){stdError[badSEs] <- sd(predictedValue, na.rm = TRUE)}
                       # just for reliability calculation
@@ -406,8 +429,21 @@ staLMM <- function(
                       predictedValue <- mixRandom$coefMME[mixRandom$ndxCoefficients[[iGenoUnit]]] +  mixRandom$coefMME[mixRandom$ndxCoefficients$`(Intercept)`]
                       dims <- mixRandom$EDdf
                       start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) + 1 # we add the one when is random
-                      pev <- as.matrix(solve(mixRandom$C))[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
-                      stdError <- stdErrorRandom <- (sqrt(diag(pev)))
+                      
+                      Cinv <- as.matrix(solve(mixRandom$C))
+                      pev <- Cinv[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
+                      
+                      #Build X
+                      idxIntercept <- mixRandom$ndxCoefficients$`(Intercept)`   # single position
+                      idxGenos     <- mixRandom$ndxCoefficients[[iGenoUnit]]    # one per genotype
+                      
+                      p <- length(mixRandom$coefMME)                 # total β + u length
+                      Xpred <- matrix(0, nrow = length(idxGenos), ncol = p)
+                      Xpred[ ,idxIntercept] <- 1                                # intercept column
+                      for (j in seq_along(idxGenos)) Xpred[j, idxGenos[j]] <- 1  # the right uᵢ
+                      
+                      stdError <- stdErrorRandom <- sqrt(diag(Xpred %*% Cinv %*% t(Xpred))) # use XC⁻¹X'
+                      
                       # move to std deviation if model is wrong and stdError is close to zero
                       badSEs <- which( stdError < (sd(predictedValue, na.rm = TRUE)/100) )
                       if(length(badSEs) > 0){stdError[badSEs] <- sd(predictedValue, na.rm = TRUE)}
