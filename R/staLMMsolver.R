@@ -587,7 +587,7 @@ staLMM <- function(
 
     }
   }
-  predictionsBind <- do.call(rbind, predictionsList)
+  predictionsBind <- do.call(rbind, predictionsList)  
 
   if(nrow(predictionsBind) == 0){
     stop( "No predictions to work with.",call. = FALSE)
@@ -618,6 +618,7 @@ staLMM <- function(
     phenoDTfile$predictions$effectType <- NA
   }
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)] )
+  phenoDTfile$predictions$stdError = as.numeric(phenoDTfile$predictions$stdError)
   newStatus <- data.frame(module="sta", analysisId=staAnalysisId, analysisIdName=NA)
   phenoDTfile$status <- rbind( phenoDTfile$status, newStatus[,colnames(phenoDTfile$status)])
   ### change column names back for mapping
