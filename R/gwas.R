@@ -30,7 +30,8 @@ gwas <- function (
       theresMatch <- which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications)
       if(length(theresMatch) > 0){ # there's a modification file after matching the Id
         modificationsMarkers <- modificationsMarkers[theresMatch,]
-        Markers <- phenoDTfile$data$geno_imp[[ as.character(as.integer(analysisIdForGenoModifications)) ]]
+        #Markers <- phenoDTfile$data$geno_imp[[ as.character(as.integer(analysisIdForGenoModifications)) ]]
+        Markers <- phenoDTfile$data$geno_imp[[grep(as.character(as.integer(analysisIdForGenoModifications)),names(phenoDTfile$data$geno_imp))]]  
       }else{ # there's no match of the modification file
         if(length(which(adegenet::glNA(Markers) > 0)) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
       }
