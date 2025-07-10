@@ -200,9 +200,11 @@ rggPiepho <- function(
 
           gg.y1<- sort(unique(mydataSub2[,fixedTerm]), decreasing = FALSE)[1]
           gg.yn <- sort(unique(mydataSub2[,fixedTerm]), decreasing = TRUE)[1]
-          ntrial <- phenoDTfile$metrics
+          ntrial <- phenoDTfile$predictions # number of trials
+          ntrial <- ntrial[which(ntrial$analysisId ==analysisId),]
           ntrial <- ntrial[which(ntrial$trait ==iTrait),]
-          ntrial <- length(unique(ntrial$environment))
+          ntrial <- unique(ntrial$environment)
+          ntrial <- length(ntrial[which(ntrial %in% environmentToUse)] )
           val[[iBoot]] <- c(b1,b0, b1Perc, b1PercAverageYear, r2, pv, ntrial,gg.y1,gg.yn, ngt  )
           stdError[[iBoot]] <- c(seb1,seb0,b1PercSe,b1PercSeAverageYear,0,0,0,0,0, ngtSe)
           counter=counter+1
