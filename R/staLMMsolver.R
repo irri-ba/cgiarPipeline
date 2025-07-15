@@ -624,7 +624,8 @@ staLMM <- function(
   ### change column names back for mapping
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
   ##
-  phenoDTfile$data$pheno <- cbind(phenoDTfile$data$pheno, mydata[,columnsToAdd]) #mydata[,unique(c(originalColumns,columnsToAdd))]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
+  #phenoDTfile$data$pheno <- cbind(phenoDTfile$data$pheno, mydata[,columnsToAdd]) #mydata[,unique(c(originalColumns,columnsToAdd))]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
+  phenoDTfile$data$pheno[, columnsToAdd] <- mydata[, columnsToAdd, drop = FALSE]
   ## add which analysisId was used as input
   modeling <- data.frame(module="sta",  analysisId=staAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
