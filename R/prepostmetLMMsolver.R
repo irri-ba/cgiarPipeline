@@ -5,8 +5,8 @@ premetLMMsolver <- function(phenoDTfile= NULL, fixedTerm= NULL, randomTerm=NULL)
   
   gxeList <- list("gxeCS" = c("environment_designation", "designation_environment",
                               "environment:designation", "designation:environment"),
-                  "gxeDMD" = c(paste0("env",envUsed,"_designation"), paste0("designation_env",envUsed),
-                               paste0("env",envUsed,":designation"), paste0("designation:env",envUsed)),
+                  "gxeDMD" = c(paste0(envUsed,"_designation"), paste0("designation_",envUsed),
+                               paste0(envUsed,":designation"), paste0("designation:",envUsed)),
                   "gxeFW" = c(paste0("value_",traitUsed,"envIndex_designation"),paste0("designation_value_",traitUsed,"envIndex"),
                               paste0("value_",traitUsed,"envIndex:designation"),paste0("designation:value_",traitUsed,"envIndex")))
   
@@ -47,9 +47,16 @@ postmetLMMsolver <- function(phenoDTfile= NULL, analysisId=NULL,
       for (i in 1:length(traitUsed)){
         pred[which(pred$analysisId == analysisId & pred$effectType %in% gxeTerms & pred$trait == traitUsed[i]),"predictedValue"] <- pred[which(pred$analysisId == analysisId & pred$effectType %in% gxeTerms & pred$trait == traitUsed[i]),"predictedValue"] - pred[which(pred$analysisId == analysisId & pred$effectType == "(Intercept)" & pred$trait == traitUsed[i]),"predictedValue"]
       }
-    }else {
+    }else if(gxeModelNum == 1){
       if(any(grepl(":designation|designation:", gxeTerms))){
         gxeTermsF <- gxeTerms[which(grepl(":designation|designation:", gxeTerms))]
+        for(j in 1:length(envUsed)){
+          pred[which(pred$analysisId == analysisId & pred$effectType %in% gxeTermsF & grepl(envUsed[j], pred$designation)),"environment"] <- envUsed[j]
+        }
+      }
+    } else if(gxeModelNum == 2){
+      if(any(grepl(":designation|designation:|_designation|designation_", gxeTerms))){
+        gxeTermsF <- gxeTerms[which(grepl(":designation|designation:|_designation|designation_", gxeTerms))]
         for(j in 1:length(envUsed)){
           pred[which(pred$analysisId == analysisId & pred$effectType %in% gxeTermsF & grepl(envUsed[j], pred$designation)),"environment"] <- envUsed[j]
         }
