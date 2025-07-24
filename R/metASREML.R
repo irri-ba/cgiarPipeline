@@ -647,11 +647,13 @@ metASREML <- function(phenoDTfile = NULL,
       if (all(blup$status == "Aliased")) {
         statusmetrics = "Aliased estimation, problems with the model, please check!"
         stdError <- reliability <- rep(NA, dim(blup)[1])
+        lsdt <- NA
       } else{
         statusmetrics = mix$converge
         message(paste(" Calculating standar errors for",iTrait,iGroup,"predictions"))
         stdError <- blup$std.error # random effect was just one column
         reliability <- abs((Vg - (stdError^2)) / Vg) # reliability <- abs((Vg - Matrix::diag(pev))/Vg)
+        lsdt <- qt(1 - 0.05 / 2, round(mix$nedf)) * predict(mix, classify =iGroup)$avsed
       }
       
       badRels <- which(reliability > 1)
@@ -707,8 +709,7 @@ metASREML <- function(phenoDTfile = NULL,
       
       # end of adding fixed effects
       sdP <- sd(prov[, "predictedValue"], na.rm = TRUE)
-      cv <- (sd(prov[, "predictedValue"], na.rm = TRUE) / mean(prov[, "predictedValue"], na.rm = TRUE)) * 100
-      lsdt <- qt(1 - 0.05 / 2, round(mix$nedf)) * predict(mix, classify =iGroup)$avsed
+      cv <- (sd(prov[, "predictedValue"], na.rm = TRUE) / mean(prov[, "predictedValue"], na.rm = TRUE)) * 100      
       # add additional entry type labels
       mydataSub[, "designationXXX"] <- apply(mydataSub[, "designation", drop =
                                                          FALSE], 1, function(x) {
