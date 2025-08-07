@@ -33,6 +33,8 @@
 # Funtion for download Climate from NASA  ---------------------------------
 nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments, temporal="hourly"){
 
+  library(dplyr)
+
 # Climate data ------------------------------------------------------------
   wthList <- metaList <- list()
   for(iEnv in 1:length(environments)){ # iEnv=1
